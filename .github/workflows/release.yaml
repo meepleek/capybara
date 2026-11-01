@@ -77,13 +77,13 @@ env:
   # The display name of the app produced by this workflow.
   # Applies to macOS releases.
   # Defaults to `app_package_name` if commented out.
-  #app_display_name: Factriss
+  #app_display_name: capyBARa
 
   # The short display name of the app produced by this workflow.
   # Applies to macOS releases.
   # Must be 15 or fewer characters: <https://developer.apple.com/documentation/bundleresources/information_property_list/cfbundlename>.
   # Defaults to `app_display_name` if commented out.
-  #app_short_name: Factriss
+  #app_short_name: capyBARa
 
   # Before enabling LFS, please take a look at GitHub's documentation for costs and quota limits:
   # <https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-storage-and-bandwidth-usage>
