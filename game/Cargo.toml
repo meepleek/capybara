@@ -8,7 +8,7 @@ mplk_ecs.workspace = true
 mplk_ext.workspace = true
 mplk_utils.workspace = true
 mplk_tween.workspace = true
-# mplk_grid.workspace = true
+mplk_grid.workspace = true
 
 bevy.workspace = true
 tracing.workspace = true
@@ -21,9 +21,11 @@ clap.workspace = true
 iyes_progress = "0.18.0"
 
 [dev-dependencies]
+mplk_grid_test_utils.workspace = true
 pretty_assertions.workspace = true
 test-case.workspace = true
 tracing-test.workspace = true
+
 
 # todo: is this still needed?
 [target.wasm32-unknown-unknown.dependencies]

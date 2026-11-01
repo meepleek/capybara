@@ -28,6 +28,7 @@ pub use tiny_bail::prelude::*;
 pub use strum::IntoEnumIterator as _;
 
 pub use mplk_ext::prelude::*;
+pub use mplk_grid::prelude::*;
 pub use mplk_tween::prelude::*;
 pub use mplk_utils::prelude::*;
 
