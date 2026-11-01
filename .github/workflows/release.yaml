@@ -215,6 +215,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.targets }}
+          toolchain: ${{ env.toolchain }}
 
       - name: Restore Rust cache
         if: ${{ env.is_platform_enabled == 'true' && github.event_name == 'push' }}
