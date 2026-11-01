@@ -25,10 +25,6 @@ fn spawn_pause_menu(mut commands: Commands) {
     ));
 }
 
-fn open_settings_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
-    next_menu.set(Menu::Settings);
-}
-
 fn close_menu(_: On<PointerClick>, mut next_menu: ResMut<NextState<Menu>>) {
     next_menu.set(Menu::None);
 }

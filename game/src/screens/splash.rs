@@ -1,7 +1,6 @@
 use bevy::{
     asset::{embedded_asset, load_embedded_asset},
     image::{ImageLoaderSettings, ImageSampler},
-    input::common_conditions::input_just_pressed,
     prelude::*,
 };
 use iyes_progress::ProgressTracker;

@@ -66,7 +66,7 @@ impl Plugin for AppPlugin {
             menus::plugin,
             screens::plugin,
             theme::plugin,
-            assets::plugin(cli.screen.unwrap_or(Screen::MainMenu)),
+            assets::plugin(cli.screen.unwrap_or(Screen::Gameplay)),
         ));
 
         app.configure_sets(

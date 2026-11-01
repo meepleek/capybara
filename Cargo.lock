@@ -1849,7 +1849,7 @@ dependencies = [
 [[package]]
 name = "bevy_trauma_shake"
 version = "0.9.0"
-source = "git+https://github.com/johanhelsing/bevy_trauma_shake#95ca0c92226250248715be7eb1e5c662f6bcf958"
+source = "git+https://github.com/johanhelsing/bevy_trauma_shake?rev=95ca0c92226250248715be7eb1e5c662f6bcf958#95ca0c92226250248715be7eb1e5c662f6bcf958"
 dependencies = [
  "bevy",
  "noisy_bevy",
@@ -1858,7 +1858,7 @@ dependencies = [
 [[package]]
 name = "bevy_tweening"
 version = "0.16.0"
-source = "git+https://github.com/djeedai/bevy_tweening#2341b0c3e4d18cc11825ba2d7cd6c5f6f41f4152"
+source = "git+https://github.com/djeedai/bevy_tweening?rev=2341b0c3e4d18cc11825ba2d7cd6c5f6f41f4152#2341b0c3e4d18cc11825ba2d7cd6c5f6f41f4152"
 dependencies = [
  "bevy",
  "thiserror 2.0.21",

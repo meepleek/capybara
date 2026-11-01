@@ -1,5 +1,5 @@
 use bevy_asset_loader::prelude::*;
-use iyes_progress::{ProgressPlugin, ProgressTracker};
+use iyes_progress::ProgressPlugin;
 
 use crate::prelude::*;
 

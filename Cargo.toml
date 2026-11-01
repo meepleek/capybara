@@ -33,7 +33,7 @@ bevy_asset_loader = { version = "0.28.0", features = [
 itertools = "0.15.0"
 # bevy_trauma_shake = "0.9.0"
 # this version added public getter & setter for trauma
-bevy_trauma_shake = { git = "https://github.com/johanhelsing/bevy_trauma_shake", revision = "95ca0c92226250248715be7eb1e5c662f6bcf958" }
+bevy_trauma_shake = { git = "https://github.com/johanhelsing/bevy_trauma_shake", rev = "95ca0c92226250248715be7eb1e5c662f6bcf958" }
 strum = { version = "0.28.0", features = ["derive"] }
 nu-ansi-term = "0.50.3"
 test-case = "3.4"
