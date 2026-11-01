@@ -11,9 +11,6 @@ pub mod tile;
 pub mod value_grid;
 pub mod world;
 
-#[cfg(test)]
-pub mod test_utils;
-
 pub type TileGridSize = U16Vec2;
 
 pub trait GridStorage<TValue> {
@@ -34,7 +31,7 @@ macro_rules! nested_grid {
                 self.$grid_fld.tile_size()
             }
         }
-        impl gameplay::grid::GridStorage<$value_ty> for $grid_ty {
+        impl $crate::GridStorage<$value_ty> for $grid_ty {
             fn occupied(&self, tile: TileCoords) -> bool {
                 self.$grid_fld.occupied(tile)
             }

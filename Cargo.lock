@@ -2935,6 +2935,8 @@ dependencies = [
  "iyes_progress",
  "mplk_ecs",
  "mplk_ext",
+ "mplk_grid",
+ "mplk_grid_test_utils",
  "mplk_tween",
  "mplk_utils",
  "pretty_assertions",
@@ -3904,6 +3906,31 @@ dependencies = [
  "bevy",
  "rand 0.9.5",
  "tiny_bail",
+]
+
+[[package]]
+name = "mplk_grid"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "derive_more",
+ "mplk_ecs",
+ "mplk_grid_test_utils",
+ "pretty_assertions",
+ "strum",
+ "test-case",
+ "tracing",
+ "tracing-test",
+]
+
+[[package]]
+name = "mplk_grid_test_utils"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "mplk_ecs",
+ "nu-ansi-term",
+ "tracing",
 ]
 
 [[package]]

@@ -8,6 +8,7 @@ mplk_ext = { path = "./ext" }
 mplk_tween = { path = "./tween" }
 mplk_utils = { path = "./utils" }
 mplk_grid = { path = "./grid" }
+mplk_grid_test_utils = { path = "./grid_test_utils" }
 
 # 2D
 bevy = { version = "0.20", default-features = false, features = [

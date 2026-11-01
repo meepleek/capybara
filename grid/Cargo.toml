@@ -11,10 +11,13 @@ tracing.workspace = true
 mplk_ecs.workspace = true
 
 [dev-dependencies]
-ansi_term.workspace = true
+mplk_grid_test_utils.workspace = true
 pretty_assertions.workspace = true
 test-case.workspace = true
 tracing-test.workspace = true
+
+[features]
+test = []
 
 [lints]
 workspace = true

@@ -7,6 +7,6 @@ pub use crate::{
 };
 
 #[cfg(test)]
-pub(crate) use crate::test_utils::TestGridUtils;
+pub use crate::ext::GridPrintExt as _;
 #[cfg(test)]
-pub use crate::{ext::GridPrintExt as _, test_utils::DebugGridTileColor};
+pub(crate) use mplk_grid_test_utils::{DebugGridTileColor, TestGridUtils};
