@@ -95,6 +95,8 @@ env:
   continuous_deployment_to_itch: false
   continuous_deployment_to_github_pages: false
 
+  toolchain: nightly-2026-10-16
+
 jobs:
   # Forward some environment variables as outputs of this job.
   # This is needed because the `env` context can't be used in the `if:` condition of a job:
