@@ -46,7 +46,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "mplk_game".to_string(),
+                        title: "capyBARa".to_string(),
                         fit_canvas_to_parent: true,
                         ..default()
                     }
