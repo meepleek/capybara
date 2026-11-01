@@ -1,0 +1,43 @@
+{
+    "$schema": "https://raw.githubusercontent.com/meepleek/json_schema/refs/tags/v0.11/project-config.schema.json",
+    "category": "gd",
+    "command_config": {
+        "status_pane": [
+            "rs:test",
+            "rs:clippy"
+        ],
+        "commands": [
+            {
+                "label": "run Game",
+                "auto_close": false,
+                "cmd": "dx serve --hot-patch --features bevy/hotpatching --package game --args=\"--screen gameplay\""
+            },
+            {
+                "label": "run Game without hotpatching",
+                "auto_close": false,
+                "cmd": "bevy run -- --screen gameplay"
+            },
+            {
+                "label": "run Main Menu",
+                "auto_close": false,
+                "cmd": "dx serve --hot-patch --features bevy/hotpatching --package game --args=\"--screen main-menu\""
+            },
+            {
+                "label": "run Tutorial",
+                "auto_close": false,
+                "cmd": "dx serve --hot-patch --features bevy/hotpatching --package game --args=\"--screen tutorial\""
+            },
+            {
+                "label": "run Splash",
+                "auto_close": false,
+                "cmd": "dx serve --hot-patch --features bevy/hotpatching --package game --args=\"--screen splash\""
+            },
+            {
+                "label": "run web",
+                "auto_close": false,
+                "cmd": "bevy run web"
+            }
+        ]
+    },
+    "task_project": "gd.template"
+}

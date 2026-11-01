@@ -1,0 +1,12 @@
+[package]
+name = "mplk_ext"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy.workspace = true
+tiny_bail.workspace = true
+rand.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,44 @@
+[package]
+name = "mplk_tween"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = { workspace = true, features = [
+  "bevy_color",
+  "bevy_asset",
+  "bevy_log",
+  "bevy_ui",
+  "bevy_sprite",
+  "bevy_render",
+  "bevy_sprite_render",
+] }
+# bevy_tweening = "0.16.0"
+# update to bevy .20 is not yet on crates.io
+bevy_tweening = { git = "https://github.com/djeedai/bevy_tweening", revision = "2341b0c3e4d18cc11825ba2d7cd6c5f6f41f4152" }
+
+# Set max log levels. This helps avoid unwanted low-severity log spam, which can affect performance.
+log = { version = "0.4", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
+tiny_bail.workspace = true
+tracing = { version = "0.1", features = [
+  "max_level_debug",
+  "release_max_level_warn",
+] }
+mplk_ext.workspace = true
+mplk_utils.workspace = true
+
+[dev-dependencies]
+bevy = { workspace = true, default-features = true }
+
+[features]
+dev = []
+
+[lints]
+workspace = true
+
+
+[[example]]
+name = "sandbox"

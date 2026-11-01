@@ -1,0 +1,83 @@
+[package]
+name = "game"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+mplk_ecs.workspace = true
+mplk_ext.workspace = true
+mplk_utils.workspace = true
+mplk_tween.workspace = true
+# mplk_grid.workspace = true
+
+bevy.workspace = true
+tracing.workspace = true
+bevy_asset_loader.workspace = true
+bevy_trauma_shake.workspace = true
+rand.workspace = true
+strum.workspace = true
+tiny_bail.workspace = true
+clap.workspace = true
+iyes_progress = "0.18.0"
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+test-case.workspace = true
+tracing-test.workspace = true
+
+# todo: is this still needed?
+[target.wasm32-unknown-unknown.dependencies]
+getrandom = { version = "0.3", features = ["wasm_js"] }
+
+[features]
+# Default to a native dev build.
+default = ["dev_native"]
+dev = [
+  # Improve compile times for dev builds by linking Bevy as a dynamic library.
+  "bevy/dynamic_linking",
+  "bevy/bevy_dev_tools",
+  "bevy/bevy_ui_debug",
+  # Improve error messages coming from Bevy
+  "bevy/track_location",
+
+  # bug - devtools need bevy_pbr
+  # https://github.com/bevyengine/bevy/issues/25980
+  "bevy/bevy_pbr",
+
+  # don't use the dev feature for root dev because that enables file watcher too which would break wasm
+  "bevy/debug",
+  "bevy/bevy_dev_tools",
+  "bevy/render_dev_tools",
+]
+dev_native = [
+  "dev",
+  # Enable asset hot reloading for native dev builds.
+  "bevy/file_watcher",
+  # Enable embedded asset hot reloading for native dev builds.
+  "bevy/embedded_watcher",
+  "dev",
+]
+
+[package.metadata.bevy_cli.release]
+# Disable dev features for release builds.
+default-features = false
+
+[package.metadata.bevy_cli.web]
+# Disable native features for web builds.
+default-features = false
+
+[package.metadata.bevy_cli.web.dev]
+features = ["dev"]
+
+[lints]
+workspace = true
+
+# bevy lints
+# <https://thebevyflock.github.io/bevy_cli/bevy_lint/lints/>
+[package.metadata.bevy_lint]
+# panicking_methods = "deny"
+# pedantic = "warn"
+
+
+# Compile with Performance Optimizations:
+# <https://bevyengine.org/learn/quick-start/getting-started/setup/#compile-with-performance-optimizations>
