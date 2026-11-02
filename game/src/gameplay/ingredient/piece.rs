@@ -5,7 +5,6 @@ pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), sandbox_setup);
-    app.add_systems(Update, draw_piece_gizmos);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -22,7 +21,7 @@ impl PiecePivot {
         Self::BtmRightCorner(corner.into())
     }
 
-    fn as_vec2(self) -> Vec2 {
+    pub fn as_vec2(self) -> Vec2 {
         match self {
             PiecePivot::Center(center) => center.as_vec2(),
             PiecePivot::BtmRightCorner(corner) => corner.as_vec2() + Vec2::splat(0.5),
@@ -65,33 +64,11 @@ impl IngredientGridPiece {
 fn sandbox_setup(mut cmd: Commands) {
     let piece =
         IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn((Transform::from_xyz(-300., 250., 0.), piece));
-}
-
-fn draw_piece_gizmos(
-    grid: Single<&IngredientGrid>,
-    piece_q: Query<(&GlobalTransform, &IngredientGridPiece)>,
-    mut gizmos: Gizmos,
-) {
-    let floaty_tile_size = grid.tile_size() as f32;
-    for (piece_t, piece) in &piece_q {
-        for t in &piece.tiles {
-            gizmos.rounded_rect_2d(
-                Isometry2d::from_translation(
-                    piece_t.translation().truncate() + t.as_vec2() * floaty_tile_size,
-                ),
-                Vec2::splat(floaty_tile_size),
-                tailwind::AMBER_600,
-            );
-        }
-        gizmos.cross_2d(
-            Isometry2d::from_translation(
-                piece_t.translation().truncate() + piece.pivot.as_vec2() * floaty_tile_size,
-            ),
-            floaty_tile_size * 0.35,
-            tailwind::AMBER_800,
-        );
-    }
+    cmd.spawn((
+        Transform::from_xyz(-300., 250., 0.),
+        piece,
+        DespawnOnExit(Screen::Gameplay),
+    ));
 }
 
 #[cfg(test)]

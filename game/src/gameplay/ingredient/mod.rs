@@ -3,8 +3,8 @@ use mplk_grid::bit_grid::BitGrid;
 use crate::gameplay::{camera::PrimaryCamera, ingredient::grid::IngredientGrid};
 pub use crate::prelude::*;
 
-mod grid;
-mod piece;
+pub(crate) mod grid;
+pub(crate) mod piece;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((grid::plugin, piece::plugin));
@@ -20,6 +20,7 @@ fn setup(mut cmd: Commands) {
     cmd.spawn((
         IngredientGrid::new(grid, t.translation.truncate()).unwrap(),
         t,
+        DespawnOnExit(Screen::Gameplay),
     ));
 }
 

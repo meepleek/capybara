@@ -50,6 +50,7 @@ dev = [
   "bevy/debug",
   "bevy/bevy_dev_tools",
   "bevy/render_dev_tools",
+  "bevy/hotpatching",
 ]
 dev_native = [
   "dev",
