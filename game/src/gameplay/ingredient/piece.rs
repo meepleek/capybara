@@ -1,3 +1,5 @@
+use bevy::color::palettes::tailwind;
+
 use crate::gameplay::ingredient::grid::IngredientGrid;
 pub use crate::prelude::*;
 
@@ -63,7 +65,7 @@ impl IngredientGridPiece {
 fn sandbox_setup(mut cmd: Commands) {
     let piece =
         IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn((Transform::from_xyz(-100., -100., 0.), piece));
+    cmd.spawn((Transform::from_xyz(-300., 250., 0.), piece));
 }
 
 fn draw_piece_gizmos(
@@ -79,9 +81,16 @@ fn draw_piece_gizmos(
                     piece_t.translation().truncate() + t.as_vec2() * floaty_tile_size,
                 ),
                 Vec2::splat(floaty_tile_size),
-                bevy::color::palettes::tailwind::AMBER_600,
+                tailwind::AMBER_600,
             );
         }
+        gizmos.cross_2d(
+            Isometry2d::from_translation(
+                piece_t.translation().truncate() + piece.pivot.as_vec2() * floaty_tile_size,
+            ),
+            floaty_tile_size * 0.35,
+            tailwind::AMBER_800,
+        );
     }
 }
 
