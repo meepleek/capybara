@@ -44,15 +44,19 @@ impl IngredientGridPiece {
     pub fn rotate_cw(&mut self) {
         let pivot = self.pivot.as_vec2();
         for t in &mut self.tiles {
-            let floaty_tile = t.as_vec2();
-            let x = pivot.x + pivot.y - floaty_tile.y;
-            let y = pivot.y - pivot.x + floaty_tile.x;
+            let x = pivot.x + pivot.y - t.y as f32;
+            let y = pivot.y - pivot.x + t.x as f32;
             *t = TileCoords::new(x.round() as _, y.round() as _);
         }
     }
 
     pub fn rotate_ccw(&mut self) {
-        todo!()
+        let pivot = self.pivot.as_vec2();
+        for t in &mut self.tiles {
+            let x = pivot.x - pivot.y + t.y as f32;
+            let y = pivot.y + pivot.x - t.x as f32;
+            *t = TileCoords::new(x.round() as _, y.round() as _);
+        }
     }
 }
 
@@ -88,6 +92,30 @@ mod tests {
     fn rotate_cw(mut piece: IngredientGridPiece, rotation_count: usize) -> Vec<(i16, i16)> {
         for _ in 0..rotation_count {
             piece.rotate_cw();
+        }
+
+        piece.tiles.into_iter().map(|t| (t.x, t.y)).collect()
+    }
+
+    #[test_case(test_piece_t(), 1 => vec![(1, 1), (1, 0), (1, -1), (2, 0)])]
+    #[test_case(test_piece_t(), 2 => vec![(2, 0), (1, 0), (0, 0), (1, -1)])]
+    #[test_case(test_piece_t(), 3 => vec![(1, -1), (1, 0), (1, 1), (0, 0)])]
+    #[test_case(test_piece_t(), 4 => vec![(0, 0), (1, 0), (2, 0), (1, 1)])]
+    #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 0), (0, -1), (0, -2)])]
+    #[test_case(test_piece_line_top_pivot(), 2 => vec![(0, 0), (-1, 0), (-2, 0)])]
+    #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 0), (0, 1), (0, 2)])]
+    #[test_case(test_piece_line_top_pivot(), 4 => vec![(0, 0), (1, 0), (2, 0)])]
+    #[test_case(test_piece_square(), 1 => vec![(0, 1), (0, 0), (1, 0), (1, 1)])]
+    #[test_case(test_piece_square(), 2 => vec![(1, 1), (0, 1), (0, 0), (1, 0)])]
+    #[test_case(test_piece_square(), 3 => vec![(1, 0), (1, 1), (0, 1), (0, 0)])]
+    #[test_case(test_piece_square(), 4 => vec![(0, 0), (1, 0), (1, 1), (0, 1)])]
+    #[test_case(test_piece_line(), 1 => vec![(-2, 1), (-1, 1), (0, 1), (1, 1)])]
+    #[test_case(test_piece_line(), 2 => vec![(-1, 3), (-1, 2), (-1, 1), (-1, 0)])]
+    #[test_case(test_piece_line(), 3 => vec![(1, 2), (0, 2), (-1, 2), (-2, 2)])]
+    #[test_case(test_piece_line(), 4 => vec![(0, 0), (0, 1), (0, 2), (0, 3)])]
+    fn rotate_ccw(mut piece: IngredientGridPiece, rotation_count: usize) -> Vec<(i16, i16)> {
+        for _ in 0..rotation_count {
+            piece.rotate_ccw();
         }
 
         piece.tiles.into_iter().map(|t| (t.x, t.y)).collect()
