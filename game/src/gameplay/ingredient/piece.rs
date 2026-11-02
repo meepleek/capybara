@@ -1,9 +1,9 @@
-use mplk_grid::bit_grid::{BitGrid, BitGridMask};
-
+use crate::gameplay::ingredient::grid::IngredientGrid;
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(Startup, sandbox_setup);
+    app.add_systems(OnEnter(Screen::Gameplay), sandbox_setup);
+    app.add_systems(Update, draw_piece_gizmos);
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -28,7 +28,7 @@ impl PiecePivot {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Component)]
 pub struct IngredientGridPiece {
     pub tiles: Vec<TileCoords>,
     pub pivot: PiecePivot,
@@ -61,10 +61,28 @@ impl IngredientGridPiece {
 }
 
 fn sandbox_setup(mut cmd: Commands) {
-    let piece = IngredientGridPiece {
-        tiles: todo!(),
-        pivot: todo!(),
-    };
+    let piece =
+        IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
+    cmd.spawn((Transform::from_xyz(-100., -100., 0.), piece));
+}
+
+fn draw_piece_gizmos(
+    grid: Single<&IngredientGrid>,
+    piece_q: Query<(&GlobalTransform, &IngredientGridPiece)>,
+    mut gizmos: Gizmos,
+) {
+    let floaty_tile_size = grid.tile_size() as f32;
+    for (piece_t, piece) in &piece_q {
+        for t in &piece.tiles {
+            gizmos.rounded_rect_2d(
+                Isometry2d::from_translation(
+                    piece_t.translation().truncate() + t.as_vec2() * floaty_tile_size,
+                ),
+                Vec2::splat(floaty_tile_size),
+                bevy::color::palettes::tailwind::AMBER_600,
+            );
+        }
+    }
 }
 
 #[cfg(test)]

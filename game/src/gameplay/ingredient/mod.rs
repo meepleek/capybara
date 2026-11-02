@@ -8,7 +8,7 @@ mod piece;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((grid::plugin, piece::plugin));
-    app.add_systems(Startup, setup);
+    app.add_systems(OnEnter(Screen::Gameplay), setup);
     app.add_systems(Update, (move_stuff, track_mouse));
 }
 
