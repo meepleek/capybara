@@ -22,10 +22,9 @@ pub(super) fn plugin(initial_screen: Screen) -> impl Fn(&mut App) {
         });
         app.add_plugins(ProgressPlugin::<Screen>::new());
         app.add_loading_state(
-            LoadingState::new(Screen::Splash), // .load_collection::<SpriteAssets>()
-                                               // .load_collection::<FontAssets>()
-                                               // .load_collection::<SfxAssets>()
-                                               // .load_collection::<MusicAssets>()
+            LoadingState::new(Screen::Splash).load_collection::<SpriteAssets>(), // .load_collection::<FontAssets>()
+                                                                                 // .load_collection::<SfxAssets>()
+                                                                                 // .load_collection::<MusicAssets>()
         );
         // app.add_systems(Startup, setup_particles);
         //
@@ -44,4 +43,12 @@ pub(super) fn plugin(initial_screen: Screen) -> impl Fn(&mut App) {
         // )
         // .expect("Failed to set default font");
     }
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct SpriteAssets {
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 4, rows = 4))]
+    pub layout: Handle<TextureAtlasLayout>,
+    #[asset(path = "images/capy.png")]
+    pub sheet: Handle<Image>,
 }

@@ -19,7 +19,7 @@ pub use bevy::prelude::*;
 pub use bevy::sprite::Anchor;
 pub use bevy::ui::FocusPolicy;
 pub use bevy::ui::Val::*;
-// pub use bevy_asset_loader::prelude::*;
+pub use bevy_asset_loader::prelude::*;
 pub use bevy_trauma_shake::prelude::*;
 pub use rand::prelude::*;
 pub use rand::rng;
@@ -33,6 +33,7 @@ pub use mplk_tween::prelude::*;
 pub use mplk_utils::prelude::*;
 
 pub use crate::UpdateSystems;
+pub use crate::assets::*;
 // #[cfg(test)]
 // pub use crate::gameplay::grid::ext::GridPrintExt as _;
 pub use crate::gameplay::{

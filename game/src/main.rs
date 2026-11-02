@@ -52,7 +52,8 @@ impl Plugin for AppPlugin {
                     }
                     .into(),
                     ..default()
-                }),
+                })
+                .set(ImagePlugin::default_nearest()),
         );
 
         app.add_plugins(mplk_tween::prelude::TweenBuilderPlugin);

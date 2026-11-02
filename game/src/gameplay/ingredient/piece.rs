@@ -62,13 +62,62 @@ impl IngredientGridPiece {
 }
 
 fn sandbox_setup(mut cmd: Commands) {
-    let piece =
-        IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn((
-        Transform::from_xyz(-300., 250., 0.),
-        piece,
-        DespawnOnExit(Screen::Gameplay),
-    ));
+    let p = IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
+    cmd.spawn_scene(piece(p, (-300., 250.)));
+}
+
+pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scene {
+    let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
+    for t in &piece.tiles {
+        let translation = (t.as_vec2() * 72.).extend(0.);
+        let tile = bsn! {
+            #piece_tile
+            Transform { translation }
+            Visibility::default()
+            Children [
+                #piece_border
+                Transform { translation: { Vec3::Z * 0.1 } }
+                from_collection(|sprites: &SpriteAssets| Sprite {
+                    image: sprites.sheet.clone(),
+                    texture_atlas: Some(TextureAtlas {
+                        layout: sprites.layout.clone(),
+                        index: 0
+                    }),
+                    image_mode: SpriteImageMode::Sliced(TextureSlicer {
+                        border: BorderRect::all(5.),
+                        center_scale_mode: SliceScaleMode::Tile {
+                            stretch_value: 1. },
+                        ..default()
+                    }),
+                    custom_size: Some(Vec2::splat(72.)),
+                    ..default()
+                })
+                --
+                #piece_content
+                Transform { translation: { Vec2::new(11., -11.).extend(0.) } }
+                from_collection(|sprites: &SpriteAssets| Sprite {
+                    image: sprites.sheet.clone(),
+                    texture_atlas: Some(TextureAtlas {
+                        layout: sprites.layout.clone(),
+                        index: 1
+                    }),
+                    custom_size: Some(Vec2::splat(89.)),
+                    ..default()
+                })
+            ]
+        };
+        tiles.push(Box::new(tile));
+    }
+
+    let translation = position.into().extend(0.);
+    bsn! {
+        #piece
+        Transform { translation }
+        Visibility::default()
+        piece
+        DespawnOnExit::<Screen>(Screen::Gameplay)
+        Children[{tiles}]
+    }
 }
 
 #[cfg(test)]
