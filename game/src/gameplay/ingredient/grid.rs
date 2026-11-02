@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{gameplay::ingredient::piece::IngredientGridPiece, prelude::*};
 
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
@@ -17,7 +17,16 @@ pub fn plugin(app: &mut App) {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ResourceGridError {
     OutOfBounds,
+    Taken,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CompletedGridSection {
+    Column(i16),
+    Row(i16),
+    Area(i16),
+}
+
 pub type ResourceGridResult<T> = Result<T, ResourceGridError>;
 
 #[derive(Component)]
@@ -33,6 +42,17 @@ impl IngredientGrid {
     pub fn new(grid: BitGrid, position: Vec2) -> Option<Self> {
         let rem = grid.grid_size() % Self::AREA_SIZE;
         (rem == TileGridSize::ZERO).then_some(Self { grid, position })
+    }
+
+    pub fn preview_piece_placement(
+        &mut self,
+        piece: IngredientGridPiece,
+        tile: TileCoords,
+    ) -> ResourceGridResult<Vec<CompletedGridSection>> {
+        todo!()
+        // let mask = self.offset_piece_mask(piece, tile);
+        // self.grid.iter_occupied_tiles(mask)
+        // Ok(())
     }
 
     pub fn place_tiles(
@@ -154,6 +174,10 @@ impl IngredientGrid {
         let mask = self.tiles_to_mask(tiles)?;
         self.grid.occupied_mask -= mask;
         Ok(())
+    }
+
+    fn offset_piece_mask(&self, piece: IngredientGridPiece, tile: TileCoords) -> BitGridMask {
+        todo!()
     }
 
     fn track_position(mut grid_q: Query<(&GlobalTransform, &mut IngredientGrid)>) {

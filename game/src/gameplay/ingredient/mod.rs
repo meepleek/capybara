@@ -4,18 +4,19 @@ use crate::gameplay::{camera::PrimaryCamera, ingredient::grid::IngredientGrid};
 pub use crate::prelude::*;
 
 mod grid;
+mod piece;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(grid::plugin);
+    app.add_plugins((grid::plugin, piece::plugin));
     app.add_systems(Startup, setup);
     app.add_systems(Update, (move_stuff, track_mouse));
 }
 
 fn setup(mut cmd: Commands) {
-    let mut grid = BitGrid::new((6, 6), 96);
+    let mut grid = BitGrid::new((9, 9), 72);
     grid.place_tile((0, 0)).unwrap();
     grid.place_tile((2, 2)).unwrap();
-    let t = Transform::from_xyz(50., 150., 0.);
+    let t = Transform::from_xyz(-200., -250., 0.);
     cmd.spawn((
         IngredientGrid::new(grid, t.translation.truncate()).unwrap(),
         t,
@@ -41,6 +42,6 @@ fn track_mouse(
 
 fn move_stuff(mut q: Query<&mut Transform, With<IngredientGrid>>, time: Res<Time>) {
     for mut t in &mut q {
-        t.translation.y = time.elapsed_secs().sin() * 150.;
+        *t = Transform::from_xyz(-300., -150., 0.);
     }
 }
