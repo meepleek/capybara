@@ -11,25 +11,25 @@ pub trait RelationshipEntities {
 #[macro_export]
 macro_rules! relationship_1_to_1 {
     ($source:ident, $target:ident) => {
-        #[derive(Component, Debug, Reflect)]
+        #[derive(Component, Debug, Reflect, FromTemplate)]
         #[reflect(Component)]
         #[relationship(relationship_target = $target)]
         pub struct $source(pub Entity);
 
         #[allow(dead_code)]
-        impl RelationshipEntity for $source {
+        impl $crate::relationship::RelationshipEntity for $source {
             fn entity(&self) -> Entity {
                 self.0
             }
         }
 
-        #[derive(Component, Debug, Reflect)]
+        #[derive(Component, Debug, Reflect, FromTemplate)]
         #[reflect(Component)]
         #[relationship_target(relationship = $source, linked_spawn)]
         pub struct $target(Entity);
 
         #[allow(dead_code)]
-        impl RelationshipEntity for $target {
+        impl $crate::relationship::RelationshipEntity for $target {
             fn entity(&self) -> Entity {
                 self.0
             }

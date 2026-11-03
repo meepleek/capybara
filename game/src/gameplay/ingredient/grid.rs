@@ -4,6 +4,7 @@ use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
     bit_grid::{BitGrid, BitGridMask},
     debug::{DebugGridPlugin, DebugGridValue},
+    error::GridTileError,
     nested_grid,
     prelude::*,
     tile::TileIterator,
@@ -15,19 +16,13 @@ pub fn plugin(app: &mut App) {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ResourceGridError {
-    OutOfBounds,
-    Taken,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CompletedGridSection {
     Column(i16),
     Row(i16),
     Area(i16),
 }
 
-pub type ResourceGridResult<T> = Result<T, ResourceGridError>;
+pub type ResourceGridResult<T> = Result<T, GridTileError>;
 
 #[derive(Component)]
 #[require(Transform)]
@@ -45,14 +40,18 @@ impl IngredientGrid {
     }
 
     pub fn preview_piece_placement(
-        &mut self,
-        piece: IngredientGridPiece,
+        &self,
+        piece: &IngredientGridPiece,
         tile: TileCoords,
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
-        todo!()
-        // let mask = self.offset_piece_mask(piece, tile);
-        // self.grid.iter_occupied_tiles(mask)
-        // Ok(())
+        let mut preview_grid = self.grid.clone();
+        for t in &piece.tiles {
+            let t = t + tile;
+            preview_grid.place_tile(t)?;
+        }
+
+        // todo
+        Ok(vec![])
     }
 
     pub fn place_tiles(
@@ -67,40 +66,40 @@ impl IngredientGrid {
     pub fn row_done(&self, row: i16) -> ResourceGridResult<bool> {
         self.grid
             .iter_row(row)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .and_then(|tiles| self.rect_done(tiles))
     }
 
     pub fn col_done(&self, column: i16) -> ResourceGridResult<bool> {
         self.grid
             .iter_column(column)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .and_then(|tiles| self.rect_done(tiles))
     }
 
     pub fn area_done(&self, idx: i16) -> ResourceGridResult<bool> {
         self.iter_area(idx)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .and_then(|tiles| self.rect_done(tiles))
     }
 
     pub fn clear_row(&mut self, row: i16) -> ResourceGridResult<()> {
         self.grid
             .iter_row(row)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .map(|tiles| self.clear_rect(tiles))?
     }
 
     pub fn clear_col(&mut self, column: i16) -> ResourceGridResult<()> {
         self.grid
             .iter_column(column)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .map(|tiles| self.clear_rect(tiles))?
     }
 
     pub fn clear_area(&mut self, idx: i16) -> ResourceGridResult<()> {
         self.iter_area(idx)
-            .ok_or(ResourceGridError::OutOfBounds)
+            .ok_or(GridTileError::OutOfBounds)
             .map(|tiles| self.clear_rect(tiles))?
     }
 
@@ -112,7 +111,7 @@ impl IngredientGrid {
         for t in tiles {
             match self.grid.tile_to_idx(t) {
                 Some(idx) => mask += idx,
-                None => return Err(ResourceGridError::OutOfBounds),
+                None => return Err(GridTileError::OutOfBounds),
             }
         }
         Ok(mask)
@@ -124,7 +123,7 @@ impl IngredientGrid {
 
     fn tile_to_area_index(&self, tile: TileCoords) -> ResourceGridResult<i16> {
         if !self.grid.within_bounds(tile) {
-            return Err(ResourceGridError::OutOfBounds);
+            return Err(GridTileError::OutOfBounds);
         }
 
         let area_coords = tile / Self::AREA_SIZE as i16;
@@ -176,10 +175,6 @@ impl IngredientGrid {
         Ok(())
     }
 
-    fn offset_piece_mask(&self, piece: IngredientGridPiece, tile: TileCoords) -> BitGridMask {
-        todo!()
-    }
-
     fn track_position(mut grid_q: Query<(&GlobalTransform, &mut IngredientGrid)>) {
         for (t, mut grid) in &mut grid_q {
             grid.position = t.translation().truncate();
@@ -214,7 +209,7 @@ mod tests {
 
     #[test_case(vec![(0, 0), (1, 0), (2, 0)] => Ok(0b111))]
     #[test_case(vec![(0, 0), (1, 1), (2, 2)] => Ok(0b100000010000001))]
-    #[test_case(vec![(100, 0)] => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(vec![(100, 0)] => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn tiles_to_mask(tiles: Vec<(i16, i16)>) -> ResourceGridResult<u128> {
         let grid = test_grid();
@@ -229,7 +224,7 @@ mod tests {
     #[test_case(vec![] => Ok(vec![(1, 1), (2, 1), (3, 1), (4, 1)]))]
     #[test_case(vec![(1, 1)] => Ok(vec![(1, 1), (2, 1), (3, 1), (4, 1)]))]
     #[test_case(vec![(0, 1), (5, 1)] => Ok(vec![(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1)]))]
-    #[test_case(vec![(100, 0)] => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(vec![(100, 0)] => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn place_tiles(extra_occupied_tiles: Vec<(i16, i16)>) -> ResourceGridResult<Vec<(i16, i16)>> {
         let mut grid = test_grid();
@@ -246,8 +241,8 @@ mod tests {
         assert_eq!(17, grid.max_idx())
     }
 
-    #[test_case((-10, 0) => Err(ResourceGridError::OutOfBounds))]
-    #[test_case((100, 100) => Err(ResourceGridError::OutOfBounds))]
+    #[test_case((-10, 0) => Err(GridTileError::OutOfBounds))]
+    #[test_case((100, 100) => Err(GridTileError::OutOfBounds))]
     #[test_case((0, 0) => Ok(0))]
     #[test_case((3, 0) => Ok(1))]
     #[test_case((5, 2) => Ok(1))]
@@ -273,8 +268,8 @@ mod tests {
             .map(|tiles| tiles.map(|t| (t.x, t.y)).collect())
     }
 
-    #[test_case((-10, 0) => Err(ResourceGridError::OutOfBounds))]
-    #[test_case((100, 100) => Err(ResourceGridError::OutOfBounds))]
+    #[test_case((-10, 0) => Err(GridTileError::OutOfBounds))]
+    #[test_case((100, 100) => Err(GridTileError::OutOfBounds))]
     #[test_case((0, 0) => Ok(vec![
         (0, 0), (1, 0), (2, 0),
         (0, 1), (1, 1), (2, 1),
@@ -320,8 +315,8 @@ mod tests {
     #[test_case(1, vec![] => Ok(false))]
     #[test_case(1, vec![(0, 1)] => Ok(false))]
     #[test_case(1, vec![(0, 1), (5, 1)] => Ok(true))]
-    #[test_case(100, vec![(0, 1)] => Err(ResourceGridError::OutOfBounds))]
-    #[test_case(1, vec![(100, 0)] => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100, vec![(0, 1)] => Err(GridTileError::OutOfBounds))]
+    #[test_case(1, vec![(100, 0)] => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn row_done(row: i16, extra_occupied_tiles: Vec<(i16, i16)>) -> ResourceGridResult<bool> {
         let mut grid = test_grid();
@@ -333,8 +328,8 @@ mod tests {
     #[test_case(1, vec![] => Ok(false))]
     #[test_case(1, vec![(1, 0)] => Ok(false))]
     #[test_case(1, vec![(1, 0), (1, 2)] => Ok(true))]
-    #[test_case(100, vec![(0, 1)] => Err(ResourceGridError::OutOfBounds))]
-    #[test_case(1, vec![(100, 0)] => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100, vec![(0, 1)] => Err(GridTileError::OutOfBounds))]
+    #[test_case(1, vec![(100, 0)] => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn col_done(col: i16, extra_occupied_tiles: Vec<(i16, i16)>) -> ResourceGridResult<bool> {
         let mut grid = test_grid();
@@ -348,8 +343,8 @@ mod tests {
         (0, 0), (1, 0), (2, 0),
         (0, 1),
         (0, 2), (1, 2), (2, 2)] => Ok(true))]
-    #[test_case(100, vec![(0, 1)] => Err(ResourceGridError::OutOfBounds))]
-    #[test_case(1, vec![(100, 0)] => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100, vec![(0, 1)] => Err(GridTileError::OutOfBounds))]
+    #[test_case(1, vec![(100, 0)] => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn area_done(area: i16, extra_occupied_tiles: Vec<(i16, i16)>) -> ResourceGridResult<bool> {
         let mut grid = test_grid();
@@ -360,7 +355,7 @@ mod tests {
 
     #[test_case(0 => Ok(()))]
     #[test_case(1 => Ok(()))]
-    #[test_case(100 => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100 => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn clear_row(row: i16) -> ResourceGridResult<()> {
         let mut grid = test_grid();
@@ -377,7 +372,7 @@ mod tests {
 
     #[test_case(0 => Ok(()))]
     #[test_case(1 => Ok(()))]
-    #[test_case(100 => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100 => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn clear_col(col: i16) -> ResourceGridResult<()> {
         let mut grid = test_grid();
@@ -394,7 +389,7 @@ mod tests {
 
     #[test_case(0 => Ok(()))]
     #[test_case(1 => Ok(()))]
-    #[test_case(100 => Err(ResourceGridError::OutOfBounds))]
+    #[test_case(100 => Err(GridTileError::OutOfBounds))]
     #[tracing_test::traced_test]
     fn clear_area(area: i16) -> ResourceGridResult<()> {
         let mut grid = test_grid();

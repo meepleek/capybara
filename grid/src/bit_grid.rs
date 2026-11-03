@@ -1,4 +1,4 @@
-use crate::{GridStorage, error::PlaceError, prelude::*};
+use crate::{GridStorage, error::GridTileError, prelude::*};
 use bevy::prelude::*;
 use std::ops;
 
@@ -74,6 +74,7 @@ impl ops::SubAssign<usize> for BitGridMask {
     }
 }
 
+#[derive(Clone)]
 pub struct BitGrid {
     grid_size: TileGridSize,
     tile_size: u16,
@@ -107,16 +108,16 @@ impl BitGrid {
         idx <= self.max_idx
     }
 
-    pub fn can_place_at(&self, tile: TileCoords) -> Result<(), PlaceError> {
+    pub fn can_place_at(&self, tile: TileCoords) -> Result<(), GridTileError> {
         if !self.within_bounds(tile) {
-            return Err(PlaceError::OutOfBounds);
+            return Err(GridTileError::OutOfBounds);
         } else if self.occupied(tile) {
-            return Err(PlaceError::Taken);
+            return Err(GridTileError::Taken);
         }
         Ok(())
     }
 
-    pub fn place_tile(&mut self, tile: impl Into<TileCoords>) -> Result<(), PlaceError> {
+    pub fn place_tile(&mut self, tile: impl Into<TileCoords>) -> Result<(), GridTileError> {
         let tile = tile.into();
         self.can_place_at(tile)?;
         let idx = self.tile_to_idx(tile).expect("valid idx");
@@ -186,13 +187,13 @@ mod tests {
 
     #[test_case(1, 2 => matches Ok(_))]
     #[test_case(4, 2 => matches Ok(_))]
-    #[test_case(2, 1 => matches Err(PlaceError::Taken))]
-    #[test_case(1, 1 => matches Err(PlaceError::Taken))]
-    #[test_case(6, 0 => matches Err(PlaceError::OutOfBounds))]
-    #[test_case(0, 3 => matches Err(PlaceError::OutOfBounds))]
-    #[test_case(50, 0 => matches Err(PlaceError::OutOfBounds))]
-    #[test_case(0, 50 => matches Err(PlaceError::OutOfBounds))]
-    fn can_place_at_coords(x: i16, y: i16) -> Result<(), PlaceError> {
+    #[test_case(2, 1 => matches Err(GridTileError::Taken))]
+    #[test_case(1, 1 => matches Err(GridTileError::Taken))]
+    #[test_case(6, 0 => matches Err(GridTileError::OutOfBounds))]
+    #[test_case(0, 3 => matches Err(GridTileError::OutOfBounds))]
+    #[test_case(50, 0 => matches Err(GridTileError::OutOfBounds))]
+    #[test_case(0, 50 => matches Err(GridTileError::OutOfBounds))]
+    fn can_place_at_coords(x: i16, y: i16) -> Result<(), GridTileError> {
         let grid = test_grid();
         grid.can_place_at((x, y).into())
     }
@@ -203,7 +204,7 @@ mod tests {
         let mut grid = test_grid();
         grid.place_tile(coords).expect("Place first piece");
 
-        assert_eq!(grid.can_place_at(coords), Err(PlaceError::Taken));
+        assert_eq!(grid.can_place_at(coords), Err(GridTileError::Taken));
     }
 
     fn test_grid() -> BitGrid {

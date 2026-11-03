@@ -1,10 +1,17 @@
-use mplk_ecs::observer::ensure_single_at_most;
+use mplk_ecs::{
+    hiearchy::RotationOf, observer::ensure_single_at_most, relationship::RelationshipEntity,
+};
+use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
-use crate::gameplay::ingredient::INGREDIENT_TILE_SIZE_F32;
+use crate::gameplay::ingredient::{INGREDIENT_TILE_SIZE_F32, grid::IngredientGrid};
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), sandbox_setup);
+    app.add_systems(
+        Update,
+        snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
+    );
     app.add_observer(ensure_single_at_most::<PieceFocus>);
 }
 
@@ -32,6 +39,21 @@ impl PiecePivot {
         match self {
             PiecePivot::Center(center) => center.as_vec2(),
             PiecePivot::BtmRightCorner(corner) => corner.as_vec2() + Vec2::splat(0.5),
+        }
+    }
+}
+
+#[derive(Debug, Component, Clone, Default)]
+#[require(Transform)]
+struct PieceDragPosition {
+    drag_position: Vec2,
+    snapped_position: Option<Vec2>,
+}
+impl PieceDragPosition {
+    pub fn new(drag_position: Vec2) -> Self {
+        Self {
+            drag_position,
+            snapped_position: None,
         }
     }
 }
@@ -69,7 +91,6 @@ impl IngredientGridPiece {
 }
 
 fn sandbox_setup(mut cmd: Commands) {
-    tracing::warn!("piece setup");
     let p = IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
     cmd.spawn_scene(piece(p, (-300., 250.)));
 }
@@ -122,43 +143,82 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
         tiles.push(Box::new(tile));
     }
 
-    let translation = position.into().extend(0.);
+    let position = position.into();
+    let translation = position.extend(0.);
     bsn! {
         #piece
         Transform { translation }
-        Visibility::default()
+        PieceDragPosition::new(position)
+        Visibility
         piece
         DespawnOnExit::<Screen>(Screen::Gameplay)
-        Children[{tiles}]
-        Pickable::default()
-        on(|ev: On<PointerEnter>, mut cmd: Commands| {
-            if ev.original_event_target() == ev.entity {
+        Pickable
+        on(|ev: On<PointerEnter>, focus_q: Query<(), With<PieceFocus>>, mut cmd: Commands| {
+            if ev.original_event_target() == ev.entity && !focus_q.contains(ev.entity)
+             {
                 cmd.try_insert_to(ev.entity, PieceFocus::Hover);
             }
         })
-        on(|ev: On<PointerLeave>, mut cmd: Commands| {
-            cmd.try_remove_from::<PieceFocus>(ev.entity);
+        on(|ev: On<PointerLeave>, focus_q: Query<&PieceFocus>, mut cmd: Commands| {
+            let focus = or_return!(focus_q.get(ev.entity));
+            if *focus == PieceFocus::Hover {
+                cmd.try_remove_from::<PieceFocus>(ev.entity);
+            }
         })
         on(|ev: On<PointerPress>, mut cmd: Commands| {
             cmd.try_insert_to(ev.entity, PieceFocus::Active);
         })
-        on(|ev: On<PointerRelease>, mut q: Query<&mut PieceFocus>| {
-            let mut focus = or_return!(q.get_mut(ev.entity));
+        on(|ev: On<PointerDragEnd>, mut focus_q: Query<&mut PieceFocus>, mut drag_q: Query<(&Transform, &mut PieceDragPosition)>| {
+            let (t, mut drag) = or_return!(drag_q.get_mut(ev.entity));
+            drag.drag_position = t.translation.truncate();
+
+            let mut focus = or_return!(focus_q.get_mut(ev.entity));
             if *focus == PieceFocus::Active {
                 *focus = PieceFocus::Hover;
             }
+
         })
-        on(|ev: On<PointerDragEnd>, mut q: Query<&mut PieceFocus>| {
-            let mut focus = or_return!(q.get_mut(ev.entity));
-            if *focus == PieceFocus::Active {
-                *focus = PieceFocus::Hover;
-            }
-        })
-        on(|ev: On<PointerDrag>, mut q: Query<&mut Transform>| {
-            let mut t = or_return!(q.get_mut(ev.entity));
+        on(|ev: On<PointerDrag>, mut q: Query<&mut PieceDragPosition>| {
+            let mut drag = or_return!(q.get_mut(ev.entity));
             let d = ev.delta;
-            t.translation += Vec3::new(d.x, -d.y, 0.);
+            drag.drag_position += Vec2::new(d.x, -d.y);
+            // tracing::warn!("dragging");
         })
+        Children[
+            #piece_sprites
+            Visibility
+            Transform
+            RotationOf(#piece)
+            Children [{tiles}]
+        ]
+    }
+}
+
+fn snap_pieces_to_grid(
+    mut piece_q: Query<
+        (&mut Transform, &IngredientGridPiece, &mut PieceDragPosition),
+        With<PieceFocus>,
+    >,
+    grid: Single<&IngredientGrid>,
+    time: Res<Time>,
+) {
+    for (mut t, piece, mut drag) in &mut piece_q {
+        if let Some(tile) = grid.world_to_tile(drag.drag_position)
+            && let Ok(_completed_sections) = grid.preview_piece_placement(piece, tile)
+        {
+            let tile_pos = or_continue!(grid.tile_to_world(tile));
+            drag.snapped_position = Some(tile_pos);
+        } else {
+            drag.snapped_position = None;
+        }
+
+        let target = drag.snapped_position.unwrap_or(drag.drag_position);
+        t.translation = asymptotic_smoothing_with_delta_time(
+            t.translation,
+            target.extend(t.translation.z),
+            0.4,
+            time.delta_secs(),
+        );
     }
 }
 

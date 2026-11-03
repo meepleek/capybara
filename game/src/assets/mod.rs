@@ -60,7 +60,6 @@ pub struct SpriteAssets {
 struct FinalizeResourceAssets {}
 impl FromWorld for FinalizeResourceAssets {
     fn from_world(world: &mut World) -> Self {
-        tracing::warn!("finally initting resource");
         let mut meshes = world.resource_mut::<Assets<Mesh>>();
         let picking_mesh_size = INGREDIENT_TILE_SIZE_F32 * 1.1;
         let piece_picking_mesh = meshes.add(Rectangle::new(picking_mesh_size, picking_mesh_size));

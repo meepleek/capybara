@@ -1,6 +1,8 @@
 use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 
+use crate::relationship_1_to_1;
+
 #[derive(SystemParam)]
 pub struct Hiearchy<'w, 's, TComponent: Component> {
     card_q: Query<'w, 's, &'static TComponent>,
@@ -21,3 +23,6 @@ impl<'w, 's, TComponent: Component> Hiearchy<'w, 's, TComponent> {
         None
     }
 }
+
+relationship_1_to_1!(SpritesOf, SpritesAncestor);
+relationship_1_to_1!(RotationOf, RotationAncestor);
