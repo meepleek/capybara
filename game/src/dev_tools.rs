@@ -1,3 +1,4 @@
+use crate::gameplay::ingredient::piece::PieceFocus;
 use crate::gameplay::ingredient::{grid::IngredientGrid, piece::IngredientGridPiece};
 use crate::prelude::*;
 
@@ -97,7 +98,7 @@ fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugOptions>, window: Single<
 
 fn draw_piece_gizmos(
     grid: Single<&IngredientGrid>,
-    piece_q: Query<(&GlobalTransform, &IngredientGridPiece)>,
+    piece_q: Query<(&GlobalTransform, &IngredientGridPiece, Option<&PieceFocus>)>,
     mut gizmos: Gizmos,
     options: Res<DebugOptions>,
 ) {
@@ -106,7 +107,7 @@ fn draw_piece_gizmos(
     }
 
     let floaty_tile_size = grid.tile_size() as f32;
-    for (piece_t, piece) in &piece_q {
+    for (piece_t, piece, piece_focus) in &piece_q {
         for t in &piece.tiles {
             gizmos.rounded_rect_2d(
                 Isometry2d::from_translation(
@@ -120,8 +121,22 @@ fn draw_piece_gizmos(
             Isometry2d::from_translation(
                 piece_t.translation().truncate() + piece.pivot.as_vec2() * floaty_tile_size,
             ),
-            floaty_tile_size * 0.35,
+            floaty_tile_size * 0.2,
             tailwind::AMBER_800,
         );
+
+        if let Some(focus) = piece_focus {
+            gizmos.text_2d(
+                Isometry2d::from_translation(
+                    piece_t.translation().truncate()
+                        + piece.pivot.as_vec2() * floaty_tile_size
+                        + Vec2::Y * 22.,
+                ),
+                &format!("{:?}", focus),
+                10.,
+                Vec2::ZERO,
+                tailwind::AMBER_800,
+            );
+        }
     }
 }

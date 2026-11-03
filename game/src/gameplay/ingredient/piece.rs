@@ -1,10 +1,18 @@
 use bevy::color::palettes::tailwind;
+use mplk_ecs::observer::ensure_single_at_most;
 
 use crate::gameplay::ingredient::grid::IngredientGrid;
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), sandbox_setup);
+    app.add_observer(ensure_single_at_most::<PieceFocus>);
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PieceFocus {
+    Hover,
+    Active,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -129,10 +137,33 @@ pub fn piece(
         DespawnOnExit::<Screen>(Screen::Gameplay)
         Children[{tiles}]
         Pickable::default()
-        on(|ev: On<PointerEnter>| {
+        on(|ev: On<PointerEnter>, mut cmd: Commands| {
             if ev.original_event_target() == ev.entity {
-                tracing::warn!(?ev, "hover")
+                cmd.try_insert_to(ev.entity, PieceFocus::Hover);
             }
+        })
+        on(|ev: On<PointerLeave>, mut cmd: Commands| {
+            cmd.try_remove_from::<PieceFocus>(ev.entity);
+        })
+        on(|ev: On<PointerPress>, mut cmd: Commands| {
+            cmd.try_insert_to(ev.entity, PieceFocus::Active);
+        })
+        on(|ev: On<PointerRelease>, mut q: Query<&mut PieceFocus>| {
+            let mut focus = or_return!(q.get_mut(ev.entity));
+            if *focus == PieceFocus::Active {
+                *focus = PieceFocus::Hover;
+            }
+        })
+        on(|ev: On<PointerDragEnd>, mut q: Query<&mut PieceFocus>| {
+            let mut focus = or_return!(q.get_mut(ev.entity));
+            if *focus == PieceFocus::Active {
+                *focus = PieceFocus::Hover;
+            }
+        })
+        on(|ev: On<PointerDrag>, mut q: Query<&mut Transform>| {
+            let mut t = or_return!(q.get_mut(ev.entity));
+            let d = ev.delta;
+            t.translation += Vec3::new(d.x, -d.y, 0.);
         })
     }
 }
