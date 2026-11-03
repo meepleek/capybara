@@ -111,7 +111,7 @@ fn draw_piece_gizmos(
         for t in &piece.tiles {
             gizmos.rounded_rect_2d(
                 Isometry2d::from_translation(
-                    piece_t.translation().truncate() + t.as_vec2() * floaty_tile_size,
+                    piece_t.translation().truncate() + t.as_world_vec2() * floaty_tile_size,
                 ),
                 Vec2::splat(floaty_tile_size),
                 tailwind::AMBER_600,

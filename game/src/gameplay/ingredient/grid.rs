@@ -46,6 +46,7 @@ impl IngredientGrid {
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
         let mut preview_grid = self.grid.clone();
         for t in &piece.tiles {
+            tracing::warn!(?t, ?tile);
             let t = t + tile;
             preview_grid.place_tile(t)?;
         }

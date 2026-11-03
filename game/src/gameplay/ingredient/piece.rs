@@ -98,7 +98,7 @@ fn sandbox_setup(mut cmd: Commands) {
 pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
-        let translation = (t.as_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
+        let translation = (t.as_world_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
         let tile = bsn! {
             #piece_tile
             Transform { translation }

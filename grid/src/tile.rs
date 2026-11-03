@@ -12,6 +12,7 @@ pub type TileCoords = I16Vec2;
 
 pub trait CoordsExt {
     fn line_to(self, end: TileCoords) -> impl Iterator<Item = TileCoords>;
+    fn as_world_vec2(self) -> Vec2;
 }
 impl CoordsExt for TileCoords {
     fn line_to(self, end: TileCoords) -> impl Iterator<Item = TileCoords> {
@@ -23,6 +24,11 @@ impl CoordsExt for TileCoords {
             let y = t * delta.y as f32 + self.y as f32;
             TileCoords::new(x.round() as _, y.round() as _)
         })
+    }
+
+    fn as_world_vec2(self) -> Vec2 {
+        let t = self.as_vec2();
+        Vec2::new(t.x, -t.y)
     }
 }
 
