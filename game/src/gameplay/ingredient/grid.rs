@@ -15,7 +15,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, IngredientGrid::track_position);
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum CompletedGridSection {
     Column(i16),
     Row(i16),
@@ -24,7 +24,7 @@ pub enum CompletedGridSection {
 
 pub type ResourceGridResult<T> = Result<T, GridTileError>;
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 #[require(Transform)]
 pub struct IngredientGrid {
     grid: BitGrid,
@@ -44,15 +44,13 @@ impl IngredientGrid {
         piece: &IngredientGridPiece,
         tile: TileCoords,
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
-        let mut preview_grid = self.grid.clone();
+        let mut preview_grid = self.clone();
         for t in &piece.tiles {
             tracing::warn!(?t, ?tile);
             let t = t + tile;
-            preview_grid.place_tile(t)?;
+            preview_grid.grid.place_tile(t)?;
         }
-
-        // todo
-        Ok(vec![])
+        Ok(preview_grid.completed_sections(piece))
     }
 
     pub fn place_piece(
@@ -65,9 +63,7 @@ impl IngredientGrid {
             let t = t + tile;
             self.grid.place_tile(t)?;
         }
-
-        // todo
-        Ok(vec![])
+        Ok(self.completed_sections(piece))
     }
 
     pub fn place_tiles(
@@ -77,6 +73,24 @@ impl IngredientGrid {
         let mask = self.tiles_to_mask(tiles)?;
         self.grid.occupied_mask += mask;
         Ok(())
+    }
+
+    fn completed_sections(&self, piece: &IngredientGridPiece) -> Vec<CompletedGridSection> {
+        let mut set = HashSet::new();
+        for t in &piece.tiles {
+            if self.row_done(t.y).is_ok_and(|done| done) {
+                set.insert(CompletedGridSection::Row(t.y));
+            }
+            if self.col_done(t.x).is_ok_and(|done| done) {
+                set.insert(CompletedGridSection::Column(t.x));
+            }
+            if let Ok(i) = self.tile_to_area_index(*t)
+                && self.area_done(i).is_ok_and(|done| done)
+            {
+                set.insert(CompletedGridSection::Area(i));
+            }
+        }
+        set.into_iter().collect()
     }
 
     pub fn row_done(&self, row: i16) -> ResourceGridResult<bool> {

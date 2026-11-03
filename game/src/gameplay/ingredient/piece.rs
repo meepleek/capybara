@@ -1,9 +1,10 @@
-use mplk_ecs::{
-    hiearchy::RotationOf, observer::ensure_single_at_most, relationship::RelationshipEntity,
-};
+use mplk_ecs::{hiearchy::RotationOf, observer::ensure_single_at_most};
 use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
-use crate::gameplay::ingredient::{INGREDIENT_TILE_SIZE_F32, grid::IngredientGrid};
+use crate::gameplay::ingredient::{
+    INGREDIENT_TILE_SIZE_F32,
+    grid::{CompletedGridSection, IngredientGrid},
+};
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -195,8 +196,15 @@ fn on_drag_end(
     if let Some(snapped_pos) = drag.snapped_position
         && let Some(tile) = grid.world_to_tile(snapped_pos)
     {
-        //todo: use
-        let _completed_sections = or_return!(grid.place_piece(piece, tile));
+        let completed_sections = or_return!(grid.place_piece(piece, tile));
+        tracing::warn!(?completed_sections);
+        for cs in completed_sections {
+            match cs {
+                CompletedGridSection::Column(col) => or_continue!(grid.clear_col(col)),
+                CompletedGridSection::Row(row) => or_continue!(grid.clear_row(row)),
+                CompletedGridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
+            };
+        }
         // set position in case it's still easing
         t.translation = snapped_pos.extend(t.translation.z);
         // todo: tween out
