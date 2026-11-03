@@ -1,7 +1,6 @@
-use bevy::color::palettes::tailwind;
 use mplk_ecs::observer::ensure_single_at_most;
 
-use crate::gameplay::ingredient::grid::IngredientGrid;
+use crate::gameplay::ingredient::INGREDIENT_TILE_SIZE_F32;
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
@@ -69,21 +68,16 @@ impl IngredientGridPiece {
     }
 }
 
-fn sandbox_setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>) {
-    // todo: add this to the sprites collection?
-    let hover_mesh = meshes.add(Rectangle::new(72., 72.));
+fn sandbox_setup(mut cmd: Commands) {
+    tracing::warn!("piece setup");
     let p = IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn_scene(piece(p, (-300., 250.), hover_mesh));
+    cmd.spawn_scene(piece(p, (-300., 250.)));
 }
 
-pub fn piece(
-    piece: IngredientGridPiece,
-    position: impl Into<Vec2>,
-    hover_mesh: Handle<Mesh>,
-) -> impl Scene {
+pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
-        let translation = (t.as_vec2() * 72.).extend(0.);
+        let translation = (t.as_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
         let tile = bsn! {
             #piece_tile
             Transform { translation }
@@ -104,7 +98,7 @@ pub fn piece(
                             stretch_value: 1. },
                         ..default()
                     }),
-                    custom_size: Some(Vec2::splat(72.)),
+                    custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
                     ..default()
                 })
                 --
@@ -121,7 +115,7 @@ pub fn piece(
                 })
                 --
                 #piece_picking_overlay
-                Mesh2d({hover_mesh.clone()})
+                Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)
                 Pickable::default()
             ]
         };

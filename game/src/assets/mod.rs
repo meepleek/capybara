@@ -1,7 +1,7 @@
 use bevy_asset_loader::prelude::*;
 use iyes_progress::ProgressPlugin;
 
-use crate::prelude::*;
+use crate::{gameplay::ingredient::INGREDIENT_TILE_SIZE_F32, prelude::*};
 
 #[derive(Resource, Debug)]
 pub(super) struct InitialScreen {
@@ -22,9 +22,11 @@ pub(super) fn plugin(initial_screen: Screen) -> impl Fn(&mut App) {
         });
         app.add_plugins(ProgressPlugin::<Screen>::new());
         app.add_loading_state(
-            LoadingState::new(Screen::Splash).load_collection::<SpriteAssets>(), // .load_collection::<FontAssets>()
-                                                                                 // .load_collection::<SfxAssets>()
-                                                                                 // .load_collection::<MusicAssets>()
+            LoadingState::new(Screen::Splash)
+                .load_collection::<SpriteAssets>()
+                .finally_init_resource::<FinalizeResourceAssets>(), // .load_collection::<FontAssets>()
+                                                                    // .load_collection::<SfxAssets>()
+                                                                    // .load_collection::<MusicAssets>()
         );
         // app.add_systems(Startup, setup_particles);
         //
@@ -51,4 +53,19 @@ pub struct SpriteAssets {
     pub layout: Handle<TextureAtlasLayout>,
     #[asset(path = "images/capy.png")]
     pub sheet: Handle<Image>,
+    pub piece_picking_mesh: Handle<Mesh>,
+}
+
+#[derive(Resource)]
+struct FinalizeResourceAssets {}
+impl FromWorld for FinalizeResourceAssets {
+    fn from_world(world: &mut World) -> Self {
+        tracing::warn!("finally initting resource");
+        let mut meshes = world.resource_mut::<Assets<Mesh>>();
+        let picking_mesh_size = INGREDIENT_TILE_SIZE_F32 * 1.1;
+        let piece_picking_mesh = meshes.add(Rectangle::new(picking_mesh_size, picking_mesh_size));
+        let mut sprites = world.resource_mut::<SpriteAssets>();
+        sprites.piece_picking_mesh = piece_picking_mesh;
+        FinalizeResourceAssets {}
+    }
 }

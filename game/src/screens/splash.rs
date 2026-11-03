@@ -2,8 +2,10 @@ use bevy::{
     asset::{embedded_asset, load_embedded_asset},
     image::{ImageLoaderSettings, ImageSampler},
     prelude::*,
+    time::common_conditions::repeating_after_delay,
 };
 use iyes_progress::ProgressTracker;
+use mplk_utils::time::ms;
 
 use crate::{UpdateSystems, assets::InitialScreen, screens::Screen, theme::prelude::*};
 
@@ -29,7 +31,10 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (
             tick_splash_timer.in_set(UpdateSystems::TickTimers),
-            check_progress.in_set(UpdateSystems::Last),
+            check_progress
+                .in_set(UpdateSystems::Last)
+                // todo: not sure why, but without the delay, this runs too soon, skips loading & the game crashes missing asset resources
+                .run_if(repeating_after_delay(ms(100))),
         )
             .run_if(in_state(Screen::Splash)),
     );
@@ -148,6 +153,7 @@ fn check_progress(
     let assets_loaded = progress.is_ready();
 
     if splash_done && assets_loaded {
+        tracing::info!("loading & splash done");
         next_screen.set(initial_screen.initial);
     }
 }
