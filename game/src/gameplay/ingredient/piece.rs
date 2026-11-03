@@ -61,12 +61,18 @@ impl IngredientGridPiece {
     }
 }
 
-fn sandbox_setup(mut cmd: Commands) {
+fn sandbox_setup(mut cmd: Commands, mut meshes: ResMut<Assets<Mesh>>) {
+    // todo: add this to the sprites collection?
+    let hover_mesh = meshes.add(Rectangle::new(72., 72.));
     let p = IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn_scene(piece(p, (-300., 250.)));
+    cmd.spawn_scene(piece(p, (-300., 250.), hover_mesh));
 }
 
-pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scene {
+pub fn piece(
+    piece: IngredientGridPiece,
+    position: impl Into<Vec2>,
+    hover_mesh: Handle<Mesh>,
+) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
         let translation = (t.as_vec2() * 72.).extend(0.);
@@ -74,6 +80,7 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
             #piece_tile
             Transform { translation }
             Visibility::default()
+            Pickable::default()
             Children [
                 #piece_border
                 Transform { translation: { Vec3::Z * 0.1 } }
@@ -104,6 +111,10 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
                     custom_size: Some(Vec2::splat(89.)),
                     ..default()
                 })
+                --
+                #piece_picking_overlay
+                Mesh2d({hover_mesh.clone()})
+                Pickable::default()
             ]
         };
         tiles.push(Box::new(tile));
@@ -117,6 +128,12 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
         piece
         DespawnOnExit::<Screen>(Screen::Gameplay)
         Children[{tiles}]
+        Pickable::default()
+        on(|ev: On<PointerEnter>| {
+            if ev.original_event_target() == ev.entity {
+                tracing::warn!(?ev, "hover")
+            }
+        })
     }
 }
 
