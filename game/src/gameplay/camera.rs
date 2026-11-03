@@ -4,7 +4,7 @@ use crate::prelude::*;
 use bevy::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(TraumaPlugin);
+    app.add_plugins((TraumaPlugin, MeshPickingPlugin));
     app.add_systems(Startup, spawn_camera);
 }
 

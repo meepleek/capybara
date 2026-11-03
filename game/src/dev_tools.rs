@@ -1,6 +1,7 @@
 use crate::gameplay::ingredient::{grid::IngredientGrid, piece::IngredientGridPiece};
 use crate::prelude::*;
 
+use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 use bevy::{color::palettes::tailwind, dev_tools::states::log_transitions};
 
 #[derive(Default, PartialEq, Eq, Debug)]
@@ -25,7 +26,9 @@ impl Default for DebugOptions {
 }
 
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins(DebugPickingPlugin);
     app.init_resource::<DebugOptions>();
+    app.insert_resource(DebugPickingMode::Normal);
     app.add_systems(
         Update,
         toggle_debug_ui.run_if(input_just_pressed(KeyCode::KeyU)),
@@ -51,8 +54,14 @@ fn toggle_hotpatch_mode(mut options: ResMut<DebugOptions>) {
     };
 }
 
-fn toggle_debug_ui(mut options: ResMut<DebugOptions>) {
-    options.show_debug_ui = !options.show_debug_ui;
+fn toggle_debug_ui(mut options: ResMut<DebugOptions>, mut picking_mode: ResMut<DebugPickingMode>) {
+    if options.show_debug_ui {
+        options.show_debug_ui = false;
+        *picking_mode = DebugPickingMode::Disabled;
+    } else {
+        options.show_debug_ui = true;
+        *picking_mode = DebugPickingMode::Normal;
+    }
 }
 
 fn reset_scene_on_hotpatch(
