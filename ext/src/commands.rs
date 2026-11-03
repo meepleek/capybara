@@ -6,6 +6,9 @@ pub trait CommandsExt {
 
     /** Try to delete a component from an entity */
     fn try_remove_from<B: Bundle>(&mut self, entity: Entity);
+
+    /** Try to despawn an entity */
+    fn try_despawn(&mut self, entity: Entity);
 }
 impl CommandsExt for Commands<'_, '_> {
     fn try_insert_to(&mut self, entity: Entity, bundle: impl Bundle) {
@@ -17,6 +20,12 @@ impl CommandsExt for Commands<'_, '_> {
     fn try_remove_from<B: Bundle>(&mut self, entity: Entity) {
         if let Ok(mut e_cmd) = self.get_entity(entity) {
             e_cmd.try_remove::<B>();
+        }
+    }
+
+    fn try_despawn(&mut self, entity: Entity) {
+        if let Ok(mut e_cmd) = self.get_entity(entity) {
+            e_cmd.try_despawn();
         }
     }
 }

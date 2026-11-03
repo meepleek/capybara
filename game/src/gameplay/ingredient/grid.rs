@@ -55,6 +55,21 @@ impl IngredientGrid {
         Ok(vec![])
     }
 
+    pub fn place_piece(
+        &mut self,
+        piece: &IngredientGridPiece,
+        tile: TileCoords,
+    ) -> ResourceGridResult<Vec<CompletedGridSection>> {
+        for t in &piece.tiles {
+            tracing::warn!(?t, ?tile);
+            let t = t + tile;
+            self.grid.place_tile(t)?;
+        }
+
+        // todo
+        Ok(vec![])
+    }
+
     pub fn place_tiles(
         &mut self,
         tiles: impl IntoIterator<Item = TileCoords>,

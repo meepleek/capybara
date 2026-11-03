@@ -187,14 +187,22 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
 fn on_drag_end(
     ev: On<PointerDragEnd>,
     mut focus_q: Query<&mut PieceFocus>,
-    mut drag_q: Query<(&Transform, &mut PieceDragPosition)>,
-    grid: Single<&IngredientGrid>,
+    mut piece_q: Query<(&mut Transform, &IngredientGridPiece, &mut PieceDragPosition)>,
+    mut grid: Single<&mut IngredientGrid>,
+    mut cmd: Commands,
 ) {
-    let (t, mut drag) = or_return!(drag_q.get_mut(ev.entity));
-    if let Some(snapped_pos) = drag.snapped_position {
+    let (mut t, piece, mut drag) = or_return!(piece_q.get_mut(ev.entity));
+    if let Some(snapped_pos) = drag.snapped_position
+        && let Some(tile) = grid.world_to_tile(snapped_pos)
+    {
+        //todo: use
+        let _completed_sections = or_return!(grid.place_piece(piece, tile));
+        // set position in case it's still easing
+        t.translation = snapped_pos.extend(t.translation.z);
+        // todo: tween out
+        cmd.try_despawn(ev.entity);
     } else {
         drag.drag_position = t.translation.truncate();
-
         let mut focus = or_return!(focus_q.get_mut(ev.entity));
         if *focus == PieceFocus::Active {
             *focus = PieceFocus::Hover;
