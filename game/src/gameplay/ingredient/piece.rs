@@ -168,21 +168,11 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
         on(|ev: On<PointerPress>, mut cmd: Commands| {
             cmd.try_insert_to(ev.entity, PieceFocus::Active);
         })
-        on(|ev: On<PointerDragEnd>, mut focus_q: Query<&mut PieceFocus>, mut drag_q: Query<(&Transform, &mut PieceDragPosition)>| {
-            let (t, mut drag) = or_return!(drag_q.get_mut(ev.entity));
-            drag.drag_position = t.translation.truncate();
-
-            let mut focus = or_return!(focus_q.get_mut(ev.entity));
-            if *focus == PieceFocus::Active {
-                *focus = PieceFocus::Hover;
-            }
-
-        })
+        on(on_drag_end)
         on(|ev: On<PointerDrag>, mut q: Query<&mut PieceDragPosition>| {
             let mut drag = or_return!(q.get_mut(ev.entity));
             let d = ev.delta;
             drag.drag_position += Vec2::new(d.x, -d.y);
-            // tracing::warn!("dragging");
         })
         Children[
             #piece_sprites
@@ -191,6 +181,24 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
             RotationOf(#piece)
             Children [{tiles}]
         ]
+    }
+}
+
+fn on_drag_end(
+    ev: On<PointerDragEnd>,
+    mut focus_q: Query<&mut PieceFocus>,
+    mut drag_q: Query<(&Transform, &mut PieceDragPosition)>,
+    grid: Single<&IngredientGrid>,
+) {
+    let (t, mut drag) = or_return!(drag_q.get_mut(ev.entity));
+    if let Some(snapped_pos) = drag.snapped_position {
+    } else {
+        drag.drag_position = t.translation.truncate();
+
+        let mut focus = or_return!(focus_q.get_mut(ev.entity));
+        if *focus == PieceFocus::Active {
+            *focus = PieceFocus::Hover;
+        }
     }
 }
 

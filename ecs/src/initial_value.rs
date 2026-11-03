@@ -5,15 +5,9 @@ use tiny_bail::or_continue;
 
 #[derive(Default)]
 pub struct InitialValuePlugin<T>(PhantomData<T>);
-impl<T: Component> Plugin for InitialValuePlugin<T> {
+impl<T: Component + Clone> Plugin for InitialValuePlugin<T> {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Last,
-            (
-                store_initial_state::<Transform>,
-                store_initial_state::<GlobalTransform>,
-            ),
-        );
+        app.add_systems(Last, (store_initial_state::<T>,));
     }
 }
 
