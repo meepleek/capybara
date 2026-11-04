@@ -6,6 +6,7 @@ pub use crate::prelude::*;
 
 pub(crate) mod grid;
 pub(crate) mod piece;
+pub(crate) mod piece_template;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((grid::plugin, piece::plugin));

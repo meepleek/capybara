@@ -5,6 +5,7 @@ use crate::gameplay::{
     ingredient::{
         INGREDIENT_TILE_SIZE_F32,
         grid::{CompletedGridSection, IngredientGrid},
+        piece_template::PieceTemplate,
     },
     layout::GameLayout,
 };
@@ -20,46 +21,6 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 const PIECE_COUNT: u8 = 3;
-
-#[derive(Debug, Clone, Copy)]
-pub enum PieceTemplate {
-    Line2,
-    Line3,
-    Line4,
-    Square,
-    Corner,
-    L,
-    LFlip,
-    Z,
-    ZFlip,
-    T,
-    Cubby, // hugger
-    Slant2,
-    Slant3,
-    Cross,
-    X,
-}
-impl PieceTemplate {
-    fn piece(self) -> Piece {
-        match self {
-            PieceTemplate::Line2 => Piece::new([(0, 0), (0, 1)]),
-            PieceTemplate::Line3 => Piece::new([(0, 0), (0, 1), (0, 2)]),
-            PieceTemplate::Line4 => Piece::new([(0, 0), (0, 1), (0, 2), (0, 3)]),
-            PieceTemplate::Square => Piece::new([(0, 0), (1, 0), (1, 1), (0, 1)]),
-            PieceTemplate::Corner => Piece::new([(0, 0), (1, 0), (0, 1)]),
-            PieceTemplate::L => Piece::new([(0, 0), (1, 0), (0, 1), (0, 2)]),
-            PieceTemplate::LFlip => Piece::new([(0, 0), (1, 0), (1, 1), (1, 2)]),
-            PieceTemplate::Z => Piece::new([(0, 0), (1, 0), (1, 1), (2, 1)]),
-            PieceTemplate::ZFlip => Piece::new([(2, 0), (1, 0), (1, 1), (0, 1)]),
-            PieceTemplate::T => Piece::new([(0, 0), (1, 0), (2, 0), (1, 1)]),
-            PieceTemplate::Cubby => Piece::new([(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)]),
-            PieceTemplate::Slant2 => Piece::new([(0, 0), (1, 1)]),
-            PieceTemplate::Slant3 => Piece::new([(0, 0), (1, 1), (2, 2)]),
-            PieceTemplate::Cross => Piece::new([(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)]),
-            PieceTemplate::X => Piece::new([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)]),
-        }
-    }
-}
 
 #[derive(Component, Debug, Clone, PartialEq, Eq, FromTemplate)]
 pub struct PieceInventoryIndex(u8);
@@ -163,12 +124,12 @@ fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, layout: GameLayout) {
                 p.rotate_cw();
             }
             let position = layout.piece_position(i);
-            cmd.spawn_scene(piece(p, position, i));
+            cmd.spawn_scene(piece_scene(p, position, i));
         }
     }
 }
 
-pub fn piece(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl Scene {
+pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
         let translation = (t.as_world_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
