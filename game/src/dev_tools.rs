@@ -117,19 +117,18 @@ fn draw_piece_gizmos(
                 tailwind::AMBER_600,
             );
         }
-        gizmos.cross_2d(
-            Isometry2d::from_translation(
-                piece_t.translation().truncate() + piece.pivot.as_vec2() * floaty_tile_size,
-            ),
-            floaty_tile_size * 0.2,
-            tailwind::AMBER_800,
-        );
 
         if let Some(focus) = piece_focus {
             gizmos.text_2d(
                 Isometry2d::from_translation(
                     piece_t.translation().truncate()
-                        + piece.pivot.as_vec2() * floaty_tile_size
+                        + piece
+                            .tiles
+                            .iter()
+                            .min_by_key(|t| t.x + t.y)
+                            .expect("at least 1 tile")
+                            .as_vec2()
+                            * floaty_tile_size
                         + Vec2::Y * 22.,
                 ),
                 &format!("{:?}", focus),

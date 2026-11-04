@@ -39,54 +39,21 @@ pub enum PieceTemplate {
 impl PieceTemplate {
     fn piece(self) -> Piece {
         match self {
-            PieceTemplate::Line2 => {
-                Piece::new(PiecePivot::btm_right_corner((-1, 0)), [(0, 0), (0, 1)])
-            }
-            PieceTemplate::Line3 => {
-                Piece::new(PiecePivot::center((0, 1)), [(0, 0), (0, 1), (0, 2)])
-            }
-            PieceTemplate::Line4 => Piece::new(
-                PiecePivot::btm_right_corner((-1, 1)),
-                [(0, 0), (0, 1), (0, 2), (0, 3)],
-            ),
-            PieceTemplate::Square => Piece::new(
-                PiecePivot::btm_right_corner((0, 0)),
-                [(0, 0), (1, 0), (1, 1), (0, 1)],
-            ),
-            PieceTemplate::Corner => {
-                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (0, 1)])
-            }
-            PieceTemplate::L => {
-                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (0, 1), (0, 2)])
-            }
-            PieceTemplate::LFlip => {
-                Piece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (1, 1), (1, 2)])
-            }
-            PieceTemplate::Z => {
-                Piece::new(PiecePivot::center((1, 1)), [(0, 0), (1, 0), (1, 1), (2, 1)])
-            }
-            PieceTemplate::ZFlip => {
-                Piece::new(PiecePivot::center((1, 1)), [(2, 0), (1, 0), (1, 1), (0, 1)])
-            }
-            PieceTemplate::T => {
-                Piece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)])
-            }
-            PieceTemplate::Cubby => Piece::new(
-                PiecePivot::center((1, 0)),
-                [(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)],
-            ),
-            PieceTemplate::Slant2 => Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 1)]),
-            PieceTemplate::Slant3 => {
-                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 1), (2, 2)])
-            }
-            PieceTemplate::Cross => Piece::new(
-                PiecePivot::center((1, 1)),
-                [(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)],
-            ),
-            PieceTemplate::X => Piece::new(
-                PiecePivot::center((1, 1)),
-                [(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)],
-            ),
+            PieceTemplate::Line2 => Piece::new([(0, 0), (0, 1)]),
+            PieceTemplate::Line3 => Piece::new([(0, 0), (0, 1), (0, 2)]),
+            PieceTemplate::Line4 => Piece::new([(0, 0), (0, 1), (0, 2), (0, 3)]),
+            PieceTemplate::Square => Piece::new([(0, 0), (1, 0), (1, 1), (0, 1)]),
+            PieceTemplate::Corner => Piece::new([(0, 0), (1, 0), (0, 1)]),
+            PieceTemplate::L => Piece::new([(0, 0), (1, 0), (0, 1), (0, 2)]),
+            PieceTemplate::LFlip => Piece::new([(0, 0), (1, 0), (1, 1), (1, 2)]),
+            PieceTemplate::Z => Piece::new([(0, 0), (1, 0), (1, 1), (2, 1)]),
+            PieceTemplate::ZFlip => Piece::new([(2, 0), (1, 0), (1, 1), (0, 1)]),
+            PieceTemplate::T => Piece::new([(0, 0), (1, 0), (2, 0), (1, 1)]),
+            PieceTemplate::Cubby => Piece::new([(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)]),
+            PieceTemplate::Slant2 => Piece::new([(0, 0), (1, 1)]),
+            PieceTemplate::Slant3 => Piece::new([(0, 0), (1, 1), (2, 2)]),
+            PieceTemplate::Cross => Piece::new([(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)]),
+            PieceTemplate::X => Piece::new([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)]),
         }
     }
 }
@@ -98,28 +65,6 @@ pub struct PieceInventoryIndex(u8);
 pub enum PieceFocus {
     Hover,
     Active,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum PiecePivot {
-    Center(TileCoords),
-    BtmRightCorner(TileCoords),
-}
-impl PiecePivot {
-    pub fn center(center: impl Into<TileCoords>) -> Self {
-        Self::Center(center.into())
-    }
-
-    pub fn btm_right_corner(corner: impl Into<TileCoords>) -> Self {
-        Self::BtmRightCorner(corner.into())
-    }
-
-    pub fn as_vec2(self) -> Vec2 {
-        match self {
-            PiecePivot::Center(center) => center.as_vec2(),
-            PiecePivot::BtmRightCorner(corner) => corner.as_vec2() + Vec2::splat(0.5),
-        }
-    }
 }
 
 #[derive(Debug, Component, Clone, Default)]
@@ -140,13 +85,11 @@ impl PieceDragPosition {
 #[derive(Debug, Clone, Component)]
 pub struct Piece {
     pub tiles: Vec<TileCoords>,
-    pub pivot: PiecePivot,
 }
 impl Piece {
-    pub fn new<T: Into<TileCoords>>(pivot: PiecePivot, tiles: impl IntoIterator<Item = T>) -> Self {
+    pub fn new<T: Into<TileCoords>>(tiles: impl IntoIterator<Item = T>) -> Self {
         Self {
             tiles: tiles.into_iter().map(Into::into).collect(),
-            pivot,
         }
     }
 
@@ -437,6 +380,6 @@ mod tests {
     }
 
     fn test_piece_line_top_pivot() -> Piece {
-        Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (2, 0)])
+        Piece::new([(0, 0), (1, 0), (2, 0)])
     }
 }
