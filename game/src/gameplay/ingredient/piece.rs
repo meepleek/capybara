@@ -70,6 +70,9 @@ pub enum PieceFocus {
     Active,
 }
 
+#[derive(Component, Debug)]
+pub struct IgnoreDrag;
+
 #[derive(Debug, Component, Clone, Default)]
 #[require(Transform)]
 struct PieceDragPosition {
@@ -230,17 +233,24 @@ pub fn piece(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl
                 cmd.try_insert_to(ev.entity, PieceFocus::Hover);
             }
         })
-        on(|ev: On<PointerLeave>, focus_q: Query<&PieceFocus>, mut cmd: Commands| {
+        on(|ev: On<PointerLeave>, focus_q: Query<&PieceFocus, Without<IgnoreDrag>>, mut cmd: Commands| {
             let focus = or_return!(focus_q.get(ev.entity));
             if *focus == PieceFocus::Hover {
                 cmd.try_remove_from::<PieceFocus>(ev.entity);
             }
         })
-        on(|ev: On<PointerPress>, mut cmd: Commands| {
+        on(|ev: On<PointerPress>, mut cmd: Commands, ignore_q: Query<(), With<IgnoreDrag>>| {
+            if ignore_q.contains(ev.entity) {
+                return;
+            }
             cmd.try_insert_to(ev.entity, PieceFocus::Active);
         })
         on(on_drag_end)
-        on(|ev: On<PointerDrag>, mut q: Query<&mut PieceDragPosition>| {
+        on(|ev: On<PointerDrag>, mut q: Query<&mut PieceDragPosition>, focus_q: Query<(&PieceFocus, Has<IgnoreDrag>)>| {
+            let (focus, ignore_drag) = or_return!(focus_q.get(ev.entity));
+            if *focus != PieceFocus::Active || ignore_drag {
+                return;
+            }
             let mut drag = or_return!(q.get_mut(ev.entity));
             let d = ev.delta;
             drag.drag_position += Vec2::new(d.x, -d.y);
@@ -257,12 +267,20 @@ pub fn piece(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl
 
 fn on_drag_end(
     ev: On<PointerDragEnd>,
-    mut focus_q: Query<&mut PieceFocus>,
-    mut piece_q: Query<(&mut Transform, &Piece, &mut PieceDragPosition)>,
+    mut piece_q: Query<
+        (
+            &mut Transform,
+            &Piece,
+            &mut PieceDragPosition,
+            &PieceInventoryIndex,
+        ),
+        Without<IgnoreDrag>,
+    >,
     mut grid: Single<&mut IngredientGrid>,
     mut cmd: Commands,
+    layout: GameLayout,
 ) {
-    let (mut t, piece, mut drag) = or_return!(piece_q.get_mut(ev.entity));
+    let (mut t, piece, mut drag, piece_idx) = or_return!(piece_q.get_mut(ev.entity));
     if let Some(snapped_pos) = drag.snapped_position
         && let Some(tile) = grid.world_to_tile(snapped_pos)
     {
@@ -278,13 +296,31 @@ fn on_drag_end(
         // set position in case it's still easing
         t.translation = snapped_pos.extend(t.translation.z);
         // todo: tween out
-        cmd.try_despawn(ev.entity);
+        cmd.try_remove_from::<Piece>(ev.entity);
+        cmd.try_insert_to(
+            ev.entity,
+            TransformScaleLensSrc::new(Vec2::ZERO)
+                .duration(ms(160))
+                .despawn_target_on_completion(),
+        );
     } else {
-        drag.drag_position = t.translation.truncate();
-        let mut focus = or_return!(focus_q.get_mut(ev.entity));
-        if *focus == PieceFocus::Active {
-            *focus = PieceFocus::Hover;
-        }
+        cmd.try_remove_from::<PieceFocus>(ev.entity);
+        let start_pos = layout.piece_position(piece_idx.0);
+        drag.drag_position = start_pos;
+        let tween_duration = ms(330);
+        cmd.try_insert_to(
+            ev.entity,
+            (
+                TransformPositionLensSrc::new(start_pos)
+                    .duration(tween_duration)
+                    .easing(EaseFunction::BackOut),
+                IgnoreDrag,
+            ),
+        );
+        cmd.delayed()
+            .duration(tween_duration)
+            .entity(ev.entity)
+            .try_remove::<IgnoreDrag>();
     }
 }
 
