@@ -46,11 +46,10 @@ impl IngredientGrid {
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
         let mut preview_grid = self.clone();
         for t in &piece.tiles {
-            tracing::warn!(?t, ?tile);
             let t = t + tile;
             preview_grid.grid.place_tile(t)?;
         }
-        Ok(preview_grid.completed_sections(piece))
+        Ok(preview_grid.completed_sections(piece, tile))
     }
 
     pub fn place_piece(
@@ -63,7 +62,7 @@ impl IngredientGrid {
             let t = t + tile;
             self.grid.place_tile(t)?;
         }
-        Ok(self.completed_sections(piece))
+        Ok(self.completed_sections(piece, tile))
     }
 
     pub fn place_tiles(
@@ -75,16 +74,17 @@ impl IngredientGrid {
         Ok(())
     }
 
-    fn completed_sections(&self, piece: &Piece) -> Vec<CompletedGridSection> {
+    fn completed_sections(&self, piece: &Piece, tile: TileCoords) -> Vec<CompletedGridSection> {
         let mut set = HashSet::new();
         for t in &piece.tiles {
+            let t = t + tile;
             if self.row_done(t.y).is_ok_and(|done| done) {
                 set.insert(CompletedGridSection::Row(t.y));
             }
             if self.col_done(t.x).is_ok_and(|done| done) {
                 set.insert(CompletedGridSection::Column(t.x));
             }
-            if let Ok(i) = self.tile_to_area_index(*t)
+            if let Ok(i) = self.tile_to_area_index(t)
                 && self.area_done(i).is_ok_and(|done| done)
             {
                 set.insert(CompletedGridSection::Area(i));
