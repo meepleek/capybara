@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod camera;
 pub mod ingredient;
+pub mod layout;
 pub mod turn;
 
 pub(super) fn plugin(app: &mut App) {

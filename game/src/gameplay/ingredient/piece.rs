@@ -1,9 +1,12 @@
 use mplk_ecs::{hiearchy::RotationOf, observer::ensure_single_at_most};
 use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
-use crate::gameplay::ingredient::{
-    INGREDIENT_TILE_SIZE_F32,
-    grid::{CompletedGridSection, IngredientGrid},
+use crate::gameplay::{
+    ingredient::{
+        INGREDIENT_TILE_SIZE_F32,
+        grid::{CompletedGridSection, IngredientGrid},
+    },
+    layout::GameLayout,
 };
 pub use crate::prelude::*;
 
@@ -58,7 +61,7 @@ impl PieceTemplate {
     }
 }
 
-#[derive(Component, Debug, Clone, PartialEq, Eq)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, FromTemplate)]
 pub struct PieceInventoryIndex(u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -133,7 +136,7 @@ impl Piece {
     }
 }
 
-fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands) {
+fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, layout: GameLayout) {
     let mut rng = rng();
     if piece_q.is_empty() {
         let lvl_pieces = [
@@ -156,12 +159,13 @@ fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands) {
             for _ in 0..(rng.random_range(0..=3)) {
                 p.rotate_cw();
             }
-            cmd.spawn_scene(piece(p, (-100. - 250. * i as f32, 330.)));
+            let position = layout.piece_position(i);
+            cmd.spawn_scene(piece(p, position, i));
         }
     }
 }
 
-pub fn piece(piece: Piece, position: impl Into<Vec2>) -> impl Scene {
+pub fn piece(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
         let translation = (t.as_world_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
@@ -212,11 +216,12 @@ pub fn piece(piece: Piece, position: impl Into<Vec2>) -> impl Scene {
     let position = position.into();
     let translation = position.extend(0.);
     bsn! {
-        #piece
+        #piece_root
+        piece
         Transform { translation }
+        PieceInventoryIndex(inventory_idx)
         PieceDragPosition::new(position)
         Visibility
-        piece
         DespawnOnExit::<Screen>(Screen::Gameplay)
         Pickable
         on(|ev: On<PointerEnter>, focus_q: Query<(), With<PieceFocus>>, mut cmd: Commands| {
