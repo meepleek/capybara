@@ -8,13 +8,91 @@ use crate::gameplay::ingredient::{
 pub use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Gameplay), sandbox_setup);
+    app.add_systems(Update, spawn_pieces.run_if(in_state(Screen::Gameplay)));
     app.add_systems(
         Update,
         snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
     );
     app.add_observer(ensure_single_at_most::<PieceFocus>);
 }
+
+const PIECE_COUNT: u8 = 3;
+
+#[derive(Debug, Clone, Copy)]
+pub enum PieceTemplate {
+    Line2,
+    Line3,
+    Line4,
+    Square,
+    Corner,
+    L,
+    LFlip,
+    Z,
+    ZFlip,
+    T,
+    Cubby, // hugger
+    Slant2,
+    Slant3,
+    Cross,
+    X,
+}
+impl PieceTemplate {
+    fn piece(self) -> Piece {
+        match self {
+            PieceTemplate::Line2 => {
+                Piece::new(PiecePivot::btm_right_corner((-1, 0)), [(0, 0), (0, 1)])
+            }
+            PieceTemplate::Line3 => {
+                Piece::new(PiecePivot::center((0, 1)), [(0, 0), (0, 1), (0, 2)])
+            }
+            PieceTemplate::Line4 => Piece::new(
+                PiecePivot::btm_right_corner((-1, 1)),
+                [(0, 0), (0, 1), (0, 2), (0, 3)],
+            ),
+            PieceTemplate::Square => Piece::new(
+                PiecePivot::btm_right_corner((0, 0)),
+                [(0, 0), (1, 0), (1, 1), (0, 1)],
+            ),
+            PieceTemplate::Corner => {
+                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (0, 1)])
+            }
+            PieceTemplate::L => {
+                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (0, 1), (0, 2)])
+            }
+            PieceTemplate::LFlip => {
+                Piece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (1, 1), (1, 2)])
+            }
+            PieceTemplate::Z => {
+                Piece::new(PiecePivot::center((1, 1)), [(0, 0), (1, 0), (1, 1), (2, 1)])
+            }
+            PieceTemplate::ZFlip => {
+                Piece::new(PiecePivot::center((1, 1)), [(2, 0), (1, 0), (1, 1), (0, 1)])
+            }
+            PieceTemplate::T => {
+                Piece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)])
+            }
+            PieceTemplate::Cubby => Piece::new(
+                PiecePivot::center((1, 0)),
+                [(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)],
+            ),
+            PieceTemplate::Slant2 => Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 1)]),
+            PieceTemplate::Slant3 => {
+                Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 1), (2, 2)])
+            }
+            PieceTemplate::Cross => Piece::new(
+                PiecePivot::center((1, 1)),
+                [(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)],
+            ),
+            PieceTemplate::X => Piece::new(
+                PiecePivot::center((1, 1)),
+                [(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)],
+            ),
+        }
+    }
+}
+
+#[derive(Component, Debug, Clone, PartialEq, Eq)]
+pub struct PieceInventoryIndex(u8);
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PieceFocus {
@@ -60,11 +138,11 @@ impl PieceDragPosition {
 }
 
 #[derive(Debug, Clone, Component)]
-pub struct IngredientGridPiece {
+pub struct Piece {
     pub tiles: Vec<TileCoords>,
     pub pivot: PiecePivot,
 }
-impl IngredientGridPiece {
+impl Piece {
     pub fn new<T: Into<TileCoords>>(pivot: PiecePivot, tiles: impl IntoIterator<Item = T>) -> Self {
         Self {
             tiles: tiles.into_iter().map(Into::into).collect(),
@@ -91,12 +169,35 @@ impl IngredientGridPiece {
     }
 }
 
-fn sandbox_setup(mut cmd: Commands) {
-    let p = IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)]);
-    cmd.spawn_scene(piece(p, (-300., 250.)));
+fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands) {
+    let mut rng = rng();
+    if piece_q.is_empty() {
+        let lvl_pieces = [
+            PieceTemplate::Line2,
+            PieceTemplate::Line3,
+            PieceTemplate::Line4,
+            PieceTemplate::T,
+            PieceTemplate::Square,
+            PieceTemplate::Corner,
+            PieceTemplate::L,
+            PieceTemplate::LFlip,
+            PieceTemplate::Z,
+            PieceTemplate::ZFlip,
+        ];
+        for i in 0..PIECE_COUNT {
+            let template = lvl_pieces
+                .choose(&mut rng)
+                .expect("No valid piece template");
+            let mut p = template.piece();
+            for _ in 0..(rng.random_range(0..=3)) {
+                p.rotate_cw();
+            }
+            cmd.spawn_scene(piece(p, (-100. - 250. * i as f32, 330.)));
+        }
+    }
 }
 
-pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scene {
+pub fn piece(piece: Piece, position: impl Into<Vec2>) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
         let translation = (t.as_world_vec2() * INGREDIENT_TILE_SIZE_F32).extend(0.);
@@ -188,7 +289,7 @@ pub fn piece(piece: IngredientGridPiece, position: impl Into<Vec2>) -> impl Scen
 fn on_drag_end(
     ev: On<PointerDragEnd>,
     mut focus_q: Query<&mut PieceFocus>,
-    mut piece_q: Query<(&mut Transform, &IngredientGridPiece, &mut PieceDragPosition)>,
+    mut piece_q: Query<(&mut Transform, &Piece, &mut PieceDragPosition)>,
     mut grid: Single<&mut IngredientGrid>,
     mut cmd: Commands,
 ) {
@@ -219,10 +320,7 @@ fn on_drag_end(
 }
 
 fn snap_pieces_to_grid(
-    mut piece_q: Query<
-        (&mut Transform, &IngredientGridPiece, &mut PieceDragPosition),
-        With<PieceFocus>,
-    >,
+    mut piece_q: Query<(&mut Transform, &Piece, &mut PieceDragPosition), With<PieceFocus>>,
     grid: Single<&IngredientGrid>,
     time: Res<Time>,
 ) {
@@ -268,7 +366,7 @@ mod tests {
     #[test_case(test_piece_line(), 2 => vec![(-1, 3), (-1, 2), (-1, 1), (-1, 0)])]
     #[test_case(test_piece_line(), 3 => vec![(-2, 1), (-1, 1), (0, 1), (1, 1)])]
     #[test_case(test_piece_line(), 4 => vec![(0, 0), (0, 1), (0, 2), (0, 3)])]
-    fn rotate_cw(mut piece: IngredientGridPiece, rotation_count: usize) -> Vec<(i16, i16)> {
+    fn rotate_cw(mut piece: Piece, rotation_count: usize) -> Vec<(i16, i16)> {
         for _ in 0..rotation_count {
             piece.rotate_cw();
         }
@@ -292,7 +390,7 @@ mod tests {
     #[test_case(test_piece_line(), 2 => vec![(-1, 3), (-1, 2), (-1, 1), (-1, 0)])]
     #[test_case(test_piece_line(), 3 => vec![(1, 2), (0, 2), (-1, 2), (-2, 2)])]
     #[test_case(test_piece_line(), 4 => vec![(0, 0), (0, 1), (0, 2), (0, 3)])]
-    fn rotate_ccw(mut piece: IngredientGridPiece, rotation_count: usize) -> Vec<(i16, i16)> {
+    fn rotate_ccw(mut piece: Piece, rotation_count: usize) -> Vec<(i16, i16)> {
         for _ in 0..rotation_count {
             piece.rotate_ccw();
         }
@@ -300,25 +398,19 @@ mod tests {
         piece.tiles.into_iter().map(|t| (t.x, t.y)).collect()
     }
 
-    fn test_piece_t() -> IngredientGridPiece {
-        IngredientGridPiece::new(PiecePivot::center((1, 0)), [(0, 0), (1, 0), (2, 0), (1, 1)])
+    fn test_piece_t() -> Piece {
+        PieceTemplate::T.piece()
     }
 
-    fn test_piece_line_top_pivot() -> IngredientGridPiece {
-        IngredientGridPiece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (2, 0)])
+    fn test_piece_square() -> Piece {
+        PieceTemplate::Square.piece()
     }
 
-    fn test_piece_square() -> IngredientGridPiece {
-        IngredientGridPiece::new(
-            PiecePivot::btm_right_corner((0, 0)),
-            [(0, 0), (1, 0), (1, 1), (0, 1)],
-        )
+    fn test_piece_line() -> Piece {
+        PieceTemplate::Line4.piece()
     }
 
-    fn test_piece_line() -> IngredientGridPiece {
-        IngredientGridPiece::new(
-            PiecePivot::btm_right_corner((-1, 1)),
-            [(0, 0), (0, 1), (0, 2), (0, 3)],
-        )
+    fn test_piece_line_top_pivot() -> Piece {
+        Piece::new(PiecePivot::center((0, 0)), [(0, 0), (1, 0), (2, 0)])
     }
 }

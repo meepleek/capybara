@@ -15,24 +15,7 @@ pub(crate) const INGREDIENT_TILE_SIZE: u16 = 72;
 pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
 fn setup(mut cmd: Commands) {
-    let mut grid = BitGrid::new((9, 9), INGREDIENT_TILE_SIZE);
-    grid.place_tile((0, 0)).unwrap();
-    grid.place_tile((1, 0)).unwrap();
-    grid.place_tile((2, 0)).unwrap();
-    grid.place_tile((0, 2)).unwrap();
-    grid.place_tile((2, 2)).unwrap();
-    grid.place_tile((3, 1)).unwrap();
-    grid.place_tile((4, 1)).unwrap();
-    grid.place_tile((5, 1)).unwrap();
-    grid.place_tile((6, 1)).unwrap();
-    grid.place_tile((7, 1)).unwrap();
-    grid.place_tile((8, 1)).unwrap();
-    grid.place_tile((1, 3)).unwrap();
-    grid.place_tile((1, 4)).unwrap();
-    grid.place_tile((1, 5)).unwrap();
-    grid.place_tile((1, 6)).unwrap();
-    grid.place_tile((1, 7)).unwrap();
-    grid.place_tile((1, 8)).unwrap();
+    let grid = BitGrid::new((9, 9), INGREDIENT_TILE_SIZE);
     let t = Transform::from_xyz(-300., -150., 0.);
     cmd.spawn((
         IngredientGrid::new(grid, t.translation.truncate()).unwrap(),

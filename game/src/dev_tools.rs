@@ -1,5 +1,5 @@
 use crate::gameplay::ingredient::piece::PieceFocus;
-use crate::gameplay::ingredient::{grid::IngredientGrid, piece::IngredientGridPiece};
+use crate::gameplay::ingredient::{grid::IngredientGrid, piece::Piece};
 use crate::prelude::*;
 
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
@@ -98,7 +98,7 @@ fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugOptions>, window: Single<
 
 fn draw_piece_gizmos(
     grid: Single<&IngredientGrid>,
-    piece_q: Query<(&GlobalTransform, &IngredientGridPiece, Option<&PieceFocus>)>,
+    piece_q: Query<(&GlobalTransform, &Piece, Option<&PieceFocus>)>,
     mut gizmos: Gizmos,
     options: Res<DebugOptions>,
 ) {

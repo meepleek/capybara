@@ -1,4 +1,4 @@
-use crate::{gameplay::ingredient::piece::IngredientGridPiece, prelude::*};
+use crate::{gameplay::ingredient::piece::Piece, prelude::*};
 
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
@@ -41,7 +41,7 @@ impl IngredientGrid {
 
     pub fn preview_piece_placement(
         &self,
-        piece: &IngredientGridPiece,
+        piece: &Piece,
         tile: TileCoords,
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
         let mut preview_grid = self.clone();
@@ -55,7 +55,7 @@ impl IngredientGrid {
 
     pub fn place_piece(
         &mut self,
-        piece: &IngredientGridPiece,
+        piece: &Piece,
         tile: TileCoords,
     ) -> ResourceGridResult<Vec<CompletedGridSection>> {
         for t in &piece.tiles {
@@ -75,7 +75,7 @@ impl IngredientGrid {
         Ok(())
     }
 
-    fn completed_sections(&self, piece: &IngredientGridPiece) -> Vec<CompletedGridSection> {
+    fn completed_sections(&self, piece: &Piece) -> Vec<CompletedGridSection> {
         let mut set = HashSet::new();
         for t in &piece.tiles {
             if self.row_done(t.y).is_ok_and(|done| done) {
