@@ -151,21 +151,42 @@ impl Piece {
     }
 
     pub fn rotate_cw(&mut self) {
-        let pivot = self.pivot.as_vec2();
         for t in &mut self.tiles {
-            let x = pivot.x + pivot.y - t.y as f32;
-            let y = pivot.y - pivot.x + t.x as f32;
-            *t = TileCoords::new(x.round() as _, y.round() as _);
+            *t = TileCoords::new(-t.y, t.x);
         }
+        self.normalize_tiles();
     }
 
     pub fn rotate_ccw(&mut self) {
-        let pivot = self.pivot.as_vec2();
         for t in &mut self.tiles {
-            let x = pivot.x - pivot.y + t.y as f32;
-            let y = pivot.y + pivot.x - t.x as f32;
-            *t = TileCoords::new(x.round() as _, y.round() as _);
+            *t = TileCoords::new(t.y, -t.x);
         }
+        self.normalize_tiles();
+    }
+
+    fn normalize_tiles(&mut self) {
+        if self.tiles.is_empty() {
+            return;
+        }
+
+        let min_x = self
+            .tiles
+            .iter()
+            .min_by_key(|t| t.x)
+            .expect("failed to find min x")
+            .x;
+        let min_y = self
+            .tiles
+            .iter()
+            .min_by_key(|t| t.y)
+            .expect("failed to find min y")
+            .y;
+        let offset = TileCoords::new(-min_x, -min_y);
+        for t in &mut self.tiles {
+            *t += offset;
+        }
+        // todo: pivot as well?
+        // todo!()
     }
 }
 
@@ -173,25 +194,30 @@ fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands) {
     let mut rng = rng();
     if piece_q.is_empty() {
         let lvl_pieces = [
-            PieceTemplate::Line2,
-            PieceTemplate::Line3,
+            // PieceTemplate::Line2,
+            // PieceTemplate::Line3,
             PieceTemplate::Line4,
-            PieceTemplate::T,
-            PieceTemplate::Square,
-            PieceTemplate::Corner,
-            PieceTemplate::L,
-            PieceTemplate::LFlip,
-            PieceTemplate::Z,
-            PieceTemplate::ZFlip,
+            // PieceTemplate::T,
+            // PieceTemplate::Square,
+            // PieceTemplate::Corner,
+            // PieceTemplate::L,
+            // PieceTemplate::LFlip,
+            // PieceTemplate::Z,
+            // PieceTemplate::ZFlip,
         ];
-        for i in 0..PIECE_COUNT {
+        // for i in 0..PIECE_COUNT {
+        for i in 0..1 {
             let template = lvl_pieces
                 .choose(&mut rng)
                 .expect("No valid piece template");
             let mut p = template.piece();
-            for _ in 0..(rng.random_range(0..=3)) {
+            tracing::warn!(?p, "pre-rotation");
+            // for _ in 0..(rng.random_range(0..=3)) {
+            for _ in 0..1 {
                 p.rotate_cw();
             }
+            tracing::warn!(?p, "post-rotation");
+
             cmd.spawn_scene(piece(p, (-100. - 250. * i as f32, 330.)));
         }
     }
@@ -350,21 +376,21 @@ mod tests {
 
     use super::*;
 
-    #[test_case(test_piece_t(), 1 => vec![(1, -1), (1, 0), (1, 1), (0, 0)])]
-    #[test_case(test_piece_t(), 2 => vec![(2, 0), (1, 0), (0, 0), (1, -1)])]
-    #[test_case(test_piece_t(), 3 => vec![(1, 1), (1, 0), (1, -1), (2, 0)])]
+    #[test_case(test_piece_t(), 1 => vec![(1, 0), (1, 1), (1, 2), (0, 1)])]
+    #[test_case(test_piece_t(), 2 => vec![(2, 1), (1, 1), (0, 1), (1, 0)])]
+    #[test_case(test_piece_t(), 3 => vec![(0, 2), (0, 1), (0, 0), (1, 1)])]
     #[test_case(test_piece_t(), 4 => vec![(0, 0), (1, 0), (2, 0), (1, 1)])]
     #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 0), (0, 1), (0, 2)])]
-    #[test_case(test_piece_line_top_pivot(), 2 => vec![(0, 0), (-1, 0), (-2, 0)])]
-    #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 0), (0, -1), (0, -2)])]
+    #[test_case(test_piece_line_top_pivot(), 2 => vec![(2, 0), (1, 0), (0, 0)])]
+    #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 2), (0, 1), (0, 0)])]
     #[test_case(test_piece_line_top_pivot(), 4 => vec![(0, 0), (1, 0), (2, 0)])]
     #[test_case(test_piece_square(), 1 => vec![(1, 0), (1, 1), (0, 1), (0, 0)])]
     #[test_case(test_piece_square(), 2 => vec![(1, 1), (0, 1), (0, 0), (1, 0)])]
     #[test_case(test_piece_square(), 3 => vec![(0, 1), (0, 0), (1, 0), (1, 1)])]
     #[test_case(test_piece_square(), 4 => vec![(0, 0), (1, 0), (1, 1), (0, 1)])]
-    #[test_case(test_piece_line(), 1 => vec![(1, 2), (0, 2), (-1, 2), (-2, 2)])]
-    #[test_case(test_piece_line(), 2 => vec![(-1, 3), (-1, 2), (-1, 1), (-1, 0)])]
-    #[test_case(test_piece_line(), 3 => vec![(-2, 1), (-1, 1), (0, 1), (1, 1)])]
+    #[test_case(test_piece_line(), 1 => vec![(3, 0), (2, 0), (1, 0), (0, 0)])]
+    #[test_case(test_piece_line(), 2 => vec![(0, 3), (0, 2), (0, 1), (0, 0)])]
+    #[test_case(test_piece_line(), 3 => vec![(0, 0), (1, 0), (2, 0), (3, 0)])]
     #[test_case(test_piece_line(), 4 => vec![(0, 0), (0, 1), (0, 2), (0, 3)])]
     fn rotate_cw(mut piece: Piece, rotation_count: usize) -> Vec<(i16, i16)> {
         for _ in 0..rotation_count {
@@ -374,21 +400,21 @@ mod tests {
         piece.tiles.into_iter().map(|t| (t.x, t.y)).collect()
     }
 
-    #[test_case(test_piece_t(), 1 => vec![(1, 1), (1, 0), (1, -1), (2, 0)])]
-    #[test_case(test_piece_t(), 2 => vec![(2, 0), (1, 0), (0, 0), (1, -1)])]
-    #[test_case(test_piece_t(), 3 => vec![(1, -1), (1, 0), (1, 1), (0, 0)])]
+    #[test_case(test_piece_t(), 1 => vec![(0, 2), (0, 1), (0, 0), (1, 1)])]
+    #[test_case(test_piece_t(), 2 => vec![(2, 1), (1, 1), (0, 1), (1, 0)])]
+    #[test_case(test_piece_t(), 3 => vec![(1, 0), (1, 1), (1, 2), (0, 1)])]
     #[test_case(test_piece_t(), 4 => vec![(0, 0), (1, 0), (2, 0), (1, 1)])]
-    #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 0), (0, -1), (0, -2)])]
-    #[test_case(test_piece_line_top_pivot(), 2 => vec![(0, 0), (-1, 0), (-2, 0)])]
+    #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 2), (0, 1), (0, 0)])]
+    #[test_case(test_piece_line_top_pivot(), 2 => vec![(2, 0), (1, 0), (0, 0)])]
     #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 0), (0, 1), (0, 2)])]
     #[test_case(test_piece_line_top_pivot(), 4 => vec![(0, 0), (1, 0), (2, 0)])]
     #[test_case(test_piece_square(), 1 => vec![(0, 1), (0, 0), (1, 0), (1, 1)])]
     #[test_case(test_piece_square(), 2 => vec![(1, 1), (0, 1), (0, 0), (1, 0)])]
     #[test_case(test_piece_square(), 3 => vec![(1, 0), (1, 1), (0, 1), (0, 0)])]
     #[test_case(test_piece_square(), 4 => vec![(0, 0), (1, 0), (1, 1), (0, 1)])]
-    #[test_case(test_piece_line(), 1 => vec![(-2, 1), (-1, 1), (0, 1), (1, 1)])]
-    #[test_case(test_piece_line(), 2 => vec![(-1, 3), (-1, 2), (-1, 1), (-1, 0)])]
-    #[test_case(test_piece_line(), 3 => vec![(1, 2), (0, 2), (-1, 2), (-2, 2)])]
+    #[test_case(test_piece_line(), 1 => vec![(0, 0), (1, 0), (2, 0), (3, 0)])]
+    #[test_case(test_piece_line(), 2 => vec![(0, 3), (0, 2), (0, 1), (0, 0)])]
+    #[test_case(test_piece_line(), 3 => vec![(3, 0), (2, 0), (1, 0), (0, 0)])]
     #[test_case(test_piece_line(), 4 => vec![(0, 0), (0, 1), (0, 2), (0, 3)])]
     fn rotate_ccw(mut piece: Piece, rotation_count: usize) -> Vec<(i16, i16)> {
         for _ in 0..rotation_count {
