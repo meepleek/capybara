@@ -137,30 +137,25 @@ fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands) {
     let mut rng = rng();
     if piece_q.is_empty() {
         let lvl_pieces = [
-            // PieceTemplate::Line2,
-            // PieceTemplate::Line3,
+            PieceTemplate::Line2,
+            PieceTemplate::Line3,
             PieceTemplate::Line4,
-            // PieceTemplate::T,
-            // PieceTemplate::Square,
-            // PieceTemplate::Corner,
-            // PieceTemplate::L,
-            // PieceTemplate::LFlip,
-            // PieceTemplate::Z,
-            // PieceTemplate::ZFlip,
+            PieceTemplate::T,
+            PieceTemplate::Square,
+            PieceTemplate::Corner,
+            PieceTemplate::L,
+            PieceTemplate::LFlip,
+            PieceTemplate::Z,
+            PieceTemplate::ZFlip,
         ];
-        // for i in 0..PIECE_COUNT {
-        for i in 0..1 {
+        for i in 0..PIECE_COUNT {
             let template = lvl_pieces
                 .choose(&mut rng)
                 .expect("No valid piece template");
             let mut p = template.piece();
-            tracing::warn!(?p, "pre-rotation");
-            // for _ in 0..(rng.random_range(0..=3)) {
-            for _ in 0..1 {
+            for _ in 0..(rng.random_range(0..=3)) {
                 p.rotate_cw();
             }
-            tracing::warn!(?p, "post-rotation");
-
             cmd.spawn_scene(piece(p, (-100. - 250. * i as f32, 330.)));
         }
     }
