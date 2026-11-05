@@ -1,26 +1,32 @@
+use bevy::window::WindowResized;
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::bit_grid::BitGrid;
 
 use crate::gameplay::{
-    ingredient::grid::{GridSection, IngredientGrid},
+    ingredient::grid::{GridSection, GridSectionCompletedMsg, IngredientGrid},
     layout::GameLayout,
 };
 pub use crate::prelude::*;
 
 pub(crate) mod grid;
+pub(crate) mod ingredient_inventory;
 pub(crate) mod piece;
 pub(crate) mod piece_template;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((grid::plugin, piece::plugin));
+    app.add_plugins((grid::plugin, piece::plugin, ingredient_inventory::plugin));
     app.add_systems(OnEnter(Screen::Gameplay), setup);
+    app.add_systems(
+        Update,
+        (clear_grid_section, move_grid_on_resize).run_if(in_state(Screen::Gameplay)),
+    );
 }
 
 pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
 pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
 pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
-#[derive(Debug)]
+#[derive(Debug, Component, Clone, Copy)]
 pub enum Ingredient {
     Honey,
     HoneyPlus,
@@ -54,6 +60,24 @@ impl Ingredient {
             Ingredient::Chocolate => 21,
             Ingredient::Water => 14,
             Ingredient::Ice => 22,
+        }
+    }
+
+    pub fn icon_scene(&self, position: Vec2) -> impl Scene {
+        let index = self.spritesheet_idx();
+        bsn! {
+                #ingredient_src_icon
+                Transform { translation: {position.extend(0.)} }
+                from_collection(move |sprites: &SpriteAssets| Sprite {
+                    image: sprites.sheet.clone(),
+                    texture_atlas: Some(TextureAtlas {
+                        layout: sprites.layout.clone(),
+                        index
+                    }),
+                    custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
+                    ..default()
+                })
+
         }
     }
 
@@ -94,20 +118,7 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
     for section in sections {
         let ingredient = Ingredient::section_ingredient(section);
         let position = layout.grid_section_position(&grid, section);
-        let index = ingredient.spritesheet_idx();
-        let ingredient_scene = bsn! {
-            #ingredient_src_icon
-            Transform { translation: {position.extend(0.)} }
-            from_collection(move |sprites: &SpriteAssets| Sprite {
-                image: sprites.sheet.clone(),
-                texture_atlas: Some(TextureAtlas {
-                    layout: sprites.layout.clone(),
-                    index
-                }),
-                custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
-                ..default()
-            })
-        };
+        let ingredient_scene = ingredient.icon_scene(position);
         ingredients.push(Box::new(ingredient_scene));
     }
 
@@ -120,19 +131,28 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
     });
 }
 
-// fn track_mouse(
-//     cam: Single<(&GlobalTransform, &Camera), With<PrimaryCamera>>,
-//     window: Single<&Window>,
-//     mut grid_q: Query<&mut IngredientGrid>,
-// ) {
-//     let (cam_t, cam) = *cam;
-//     if let Some(cursor_pos) = window.cursor_position()
-//         && let Ok(cursor_world_pos) = cam.viewport_to_world_2d(cam_t, cursor_pos)
-//     {
-//         for mut g in &mut grid_q {
-//             if let Some(tile) = g.world_to_tile(cursor_world_pos) {
-//                 g.place_tiles([tile]).unwrap();
-//             }
-//         }
-//     }
-// }
+fn clear_grid_section(
+    mut section_mr: MessageReader<GridSectionCompletedMsg>,
+    mut grid: Single<&mut IngredientGrid>,
+) {
+    // todo: tween out marked tiles
+    for msg in section_mr.read() {
+        match msg.0 {
+            GridSection::Column(col) => or_continue!(grid.clear_col(col)),
+            GridSection::Row(row) => or_continue!(grid.clear_row(row)),
+            GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
+        };
+    }
+}
+
+fn move_grid_on_resize(
+    mut resize_mr: MessageReader<WindowResized>,
+    mut grid_q: Query<(&mut Transform, &IngredientGrid)>,
+    layout: GameLayout,
+) {
+    if resize_mr.clear_any() {
+        for (mut t, grid) in &mut grid_q {
+            t.translation = layout.grid_position(grid).extend(t.translation.z);
+        }
+    }
+}

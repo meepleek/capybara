@@ -1,10 +1,12 @@
+use bevy::window::WindowResized;
 use mplk_ecs::{hiearchy::RotationOf, observer::ensure_single_at_most};
 use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
 use crate::gameplay::{
     ingredient::{
         INGREDIENT_TILE_SIZE_F32,
-        grid::{GridSection, IngredientGrid},
+        grid::{GridSectionCompletedMsg, IngredientGrid},
+        ingredient_inventory::InventoryIndex,
         piece_template::PieceTemplate,
     },
     layout::GameLayout,
@@ -15,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, spawn_pieces.run_if(in_state(Screen::Gameplay)));
     app.add_systems(
         Update,
-        snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
+        (snap_pieces_to_grid, move_pieces_on_resize).run_if(in_state(Screen::Gameplay)),
     );
     app.add_observer(ensure_single_at_most::<PieceFocus>);
 }
@@ -124,7 +126,10 @@ fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, layout: GameLayout) {
                 p.rotate_cw();
             }
             let position = layout.piece_position(i);
-            cmd.spawn_scene(piece_scene(p, position, i));
+            cmd.spawn_scene(bsn! {
+                @{piece_scene(p, position, i)}
+                InventoryIndex({i as u8})
+            });
         }
     }
 }
@@ -240,6 +245,7 @@ fn on_drag_end(
     mut grid: Single<&mut IngredientGrid>,
     mut cmd: Commands,
     layout: GameLayout,
+    mut section_mw: MessageWriter<GridSectionCompletedMsg>,
 ) {
     let (mut t, piece, mut drag, piece_idx) = or_return!(piece_q.get_mut(ev.entity));
     if let Some(snapped_pos) = drag.snapped_position
@@ -248,15 +254,10 @@ fn on_drag_end(
         let completed_sections = or_return!(grid.place_piece(piece, tile));
         tracing::warn!(?completed_sections);
         for cs in completed_sections {
-            match cs {
-                GridSection::Column(col) => or_continue!(grid.clear_col(col)),
-                GridSection::Row(row) => or_continue!(grid.clear_row(row)),
-                GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
-            };
+            section_mw.write(GridSectionCompletedMsg(cs));
         }
         // set position in case it's still easing
         t.translation = snapped_pos.extend(t.translation.z);
-        // todo: tween out
         cmd.try_remove_from::<Piece>(ev.entity);
         cmd.try_insert_to(
             ev.entity,
@@ -282,6 +283,24 @@ fn on_drag_end(
             .duration(tween_duration)
             .entity(ev.entity)
             .try_remove::<IgnoreDrag>();
+    }
+}
+
+// todo: need to handle returning ingredients as well
+fn move_pieces_on_resize(
+    mut resize_mr: MessageReader<WindowResized>,
+    mut ingredient_q: Query<
+        (&mut Transform, &mut PieceDragPosition, &InventoryIndex),
+        (With<Piece>, Without<IgnoreDrag>),
+    >,
+    layout: GameLayout,
+) {
+    if resize_mr.clear_any() {
+        for (mut t, mut drag, idx) in &mut ingredient_q {
+            let position = layout.piece_position(idx.0);
+            t.translation = position.extend(t.translation.z);
+            drag.drag_position = position;
+        }
     }
 }
 

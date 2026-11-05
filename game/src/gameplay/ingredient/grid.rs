@@ -13,6 +13,7 @@ use mplk_grid::{
 pub fn plugin(app: &mut App) {
     app.add_plugins(DebugGridPlugin::<IngredientGrid, ()>::default());
     app.add_systems(Update, IngredientGrid::track_position);
+    app.add_message::<GridSectionCompletedMsg>();
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,6 +22,9 @@ pub enum GridSection {
     Row(i16),
     Area(i16),
 }
+
+#[derive(Debug, Message)]
+pub struct GridSectionCompletedMsg(pub GridSection);
 
 pub type ResourceGridResult<T> = Result<T, GridTileError>;
 
@@ -58,7 +62,6 @@ impl IngredientGrid {
         tile: TileCoords,
     ) -> ResourceGridResult<Vec<GridSection>> {
         for t in &piece.tiles {
-            tracing::warn!(?t, ?tile);
             let t = t + tile;
             self.grid.place_tile(t)?;
         }

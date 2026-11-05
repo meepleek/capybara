@@ -1,5 +1,4 @@
 use bevy::ecs::system::SystemParam;
-use mplk_ecs::transform::TrackPosition;
 
 use crate::{
     gameplay::ingredient::grid::{GridSection, IngredientGrid},
@@ -56,6 +55,17 @@ impl GameLayout<'_, '_> {
                 + 60. // margin
                 + 250. * idx as f32 // piece idx offset
                 + Self::PADDING,
+            window_half.y - 40. - Self::PADDING,
+        )
+    }
+
+    pub fn ingredient_position(&self, idx: u8) -> Vec2 {
+        let window_half = self.window_half_size();
+        Vec2::new(
+            window_half.x // right edge
+                - 20. // extra margin
+                - 90. * idx as f32 // piece idx offset
+                - Self::PADDING,
             window_half.y - 40. - Self::PADDING,
         )
     }
