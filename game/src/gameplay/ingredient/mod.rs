@@ -57,21 +57,20 @@ impl Ingredient {
         }
     }
 
-    pub fn icon_scene(&self, position: Vec2) -> impl Scene {
+    pub fn icon_scene(self, position: Vec2) -> impl Scene {
         let index = self.spritesheet_idx();
         bsn! {
-                #ingredient_src_icon
-                Transform { translation: {position.extend(0.)} }
-                from_collection(move |sprites: &SpriteAssets| Sprite {
-                    image: sprites.sheet.clone(),
-                    texture_atlas: Some(TextureAtlas {
-                        layout: sprites.layout.clone(),
-                        index
-                    }),
-                    custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
-                    ..default()
-                })
-
+            #ingredient_src_icon
+            Transform { translation: {position.extend(0.)} }
+            from_collection(move |sprites: &SpriteAssets| Sprite {
+                image: sprites.ingredients_sheet.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: sprites.ingredients_layout.clone(),
+                    index
+                }),
+                custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
+                ..default()
+            })
         }
     }
 

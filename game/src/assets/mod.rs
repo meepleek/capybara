@@ -50,10 +50,14 @@ pub(super) fn plugin(initial_screen: Screen) -> impl Fn(&mut App) {
 #[derive(AssetCollection, Resource)]
 pub struct SpriteAssets {
     #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 8, rows = 4))]
-    pub layout: Handle<TextureAtlasLayout>,
-    #[asset(path = "images/capy.png")]
-    pub sheet: Handle<Image>,
+    pub ingredients_layout: Handle<TextureAtlasLayout>,
+    #[asset(path = "images/ingredients.png")]
+    pub ingredients_sheet: Handle<Image>,
     pub piece_picking_mesh: Handle<Mesh>,
+    #[asset(texture_atlas_layout(tile_size_x = 64, tile_size_y = 64, columns = 4, rows = 2))]
+    pub bar_layout: Handle<TextureAtlasLayout>,
+    #[asset(path = "images/bar.png")]
+    pub bar_sheet: Handle<Image>,
 }
 
 #[derive(Resource)]

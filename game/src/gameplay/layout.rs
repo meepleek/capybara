@@ -70,6 +70,16 @@ impl GameLayout<'_, '_> {
         )
     }
 
+    pub fn shaker_position(&self) -> Vec2 {
+        let window_half = self.window_half_size();
+        Vec2::new(
+            window_half.x // right edge
+                - 60. // extra margin
+                - Self::PADDING,
+            0.,
+        )
+    }
+
     fn window_half_size(&self) -> Vec2 {
         self.window.size() / 2.
     }

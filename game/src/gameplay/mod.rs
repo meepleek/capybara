@@ -7,6 +7,7 @@ pub mod ingredient;
 pub mod inventory;
 pub mod layout;
 pub mod piece;
+pub mod shaker;
 pub mod turn;
 
 pub(super) fn plugin(app: &mut App) {
@@ -16,5 +17,6 @@ pub(super) fn plugin(app: &mut App) {
         grid::plugin,
         piece::plugin,
         drag::plugin,
+        shaker::plugin,
     ));
 }

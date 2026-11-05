@@ -52,9 +52,9 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
                 #piece_border
                 Transform { translation: { Vec3::Z * 0.1 } }
                 from_collection(|sprites: &SpriteAssets| Sprite {
-                    image: sprites.sheet.clone(),
+                    image: sprites.ingredients_sheet.clone(),
                     texture_atlas: Some(TextureAtlas {
-                        layout: sprites.layout.clone(),
+                        layout: sprites.ingredients_layout.clone(),
                         index: 0
                     }),
                     image_mode: SpriteImageMode::Sliced(TextureSlicer {
@@ -70,9 +70,9 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
                 #piece_content
                 Transform { translation: { Vec2::new(11., -11.).extend(0.) } }
                 from_collection(|sprites: &SpriteAssets| Sprite {
-                    image: sprites.sheet.clone(),
+                    image: sprites.ingredients_sheet.clone(),
                     texture_atlas: Some(TextureAtlas {
-                        layout: sprites.layout.clone(),
+                        layout: sprites.ingredients_layout.clone(),
                         index: 1
                     }),
                     custom_size: Some(Vec2::splat(89.)),
