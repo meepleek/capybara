@@ -4,6 +4,8 @@ use crate::prelude::*;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(ensure_single_at_most::<DragFocus>);
+    app.add_systems(Update, raise_z_on_drag_active)
+        .add_observer(restore_z_on_drag_rmv);
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -14,6 +16,9 @@ pub enum DragFocus {
 
 #[derive(Component, Debug)]
 pub struct IgnoreDrag;
+
+#[derive(Component, Debug)]
+pub struct InitialTranslationZ(f32);
 
 #[derive(Debug, Component, Clone, Default)]
 #[require(Transform)]
@@ -28,6 +33,32 @@ impl DragPosition {
             snapped_position: None,
         }
     }
+}
+
+fn raise_z_on_drag_active(
+    mut trans_q: Query<
+        (Entity, &mut Transform, &DragFocus),
+        (Changed<DragFocus>, Without<InitialTranslationZ>),
+    >,
+    mut cmd: Commands,
+) {
+    for (e, mut t, focus) in &mut trans_q {
+        if focus != &DragFocus::Active {
+            return;
+        }
+        cmd.try_insert_to(e, InitialTranslationZ(t.translation.z));
+        t.translation.z += 100.;
+    }
+}
+
+fn restore_z_on_drag_rmv(
+    ev: On<Remove<DragFocus>>,
+    mut trans_q: Query<(&mut Transform, &InitialTranslationZ)>,
+    mut cmd: Commands,
+) {
+    let (mut t, z) = or_return!(trans_q.get_mut(ev.entity));
+    t.translation.z = z.0;
+    cmd.try_remove_from::<InitialTranslationZ>(ev.entity);
 }
 
 pub(super) fn on_draggable_hover(
