@@ -17,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
-pub(crate) const INGREDIENT_TILE_SIZE: u16 = 72;
+pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
 pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
 #[derive(Debug)]
