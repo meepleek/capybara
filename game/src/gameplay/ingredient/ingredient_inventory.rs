@@ -39,6 +39,7 @@ fn add_ingredient(
             @{ingredient.icon_scene(position)}
             ingredient
             InventoryIndex(idx)
+            DespawnOnExit<Screen>(Screen::Gameplay)
         });
         idx += 1;
     }
