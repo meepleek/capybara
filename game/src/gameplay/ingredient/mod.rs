@@ -10,12 +10,15 @@ use crate::gameplay::{
 };
 pub use crate::prelude::*;
 
-pub(crate) mod inventory;
+mod drag;
+mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(inventory::plugin);
+    app.add_plugins((spawn::plugin, drag::plugin));
     app.add_systems(OnEnter(Screen::Gameplay), setup);
 }
+
+pub(crate) const INGREDIENT_MAX: u8 = 6;
 
 #[derive(Debug, Component, Clone, Copy)]
 pub enum Ingredient {

@@ -1,5 +1,6 @@
 use crate::{gameplay::piece::Piece, prelude::*};
 
+#[expect(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub enum PieceTemplate {
     Line2,

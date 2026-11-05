@@ -19,20 +19,6 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-pub(super) fn on_drag(
-    ev: On<PointerDrag>,
-    mut q: Query<&mut DragPosition>,
-    focus_q: Query<(&DragFocus, Has<IgnoreDrag>)>,
-) {
-    let (focus, ignore_drag) = or_return!(focus_q.get(ev.entity));
-    if *focus != DragFocus::Active || ignore_drag {
-        return;
-    }
-    let mut drag = or_return!(q.get_mut(ev.entity));
-    let d = ev.delta;
-    drag.drag_position += Vec2::new(d.x, -d.y);
-}
-
 pub(super) fn on_drag_end(
     ev: On<PointerDragEnd>,
     mut piece_q: Query<
@@ -81,38 +67,6 @@ pub(super) fn on_drag_end(
             .entity(ev.entity)
             .try_remove::<IgnoreDrag>();
     }
-}
-
-pub(super) fn on_hover(
-    ev: On<PointerEnter>,
-    focus_q: Query<(), With<DragFocus>>,
-    mut cmd: Commands,
-) {
-    if ev.original_event_target() == ev.entity && !focus_q.contains(ev.entity) {
-        cmd.try_insert_to(ev.entity, DragFocus::Hover);
-    }
-}
-
-pub(super) fn on_blur(
-    ev: On<PointerLeave>,
-    focus_q: Query<&DragFocus, Without<IgnoreDrag>>,
-    mut cmd: Commands,
-) {
-    let focus = or_return!(focus_q.get(ev.entity));
-    if *focus == DragFocus::Hover {
-        cmd.try_remove_from::<DragFocus>(ev.entity);
-    }
-}
-
-pub(super) fn on_press(
-    ev: On<PointerPress>,
-    mut cmd: Commands,
-    ignore_q: Query<(), With<IgnoreDrag>>,
-) {
-    if ignore_q.contains(ev.entity) {
-        return;
-    }
-    cmd.try_insert_to(ev.entity, DragFocus::Active);
 }
 
 // todo: need to handle returning ingredients as well

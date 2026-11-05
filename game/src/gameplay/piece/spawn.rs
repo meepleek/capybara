@@ -2,6 +2,7 @@ use mplk_ecs::hiearchy::RotationOf;
 
 use crate::{
     gameplay::{
+        self,
         drag::DragPosition,
         grid::INGREDIENT_TILE_SIZE_F32,
         inventory::InventoryIndex,
@@ -45,8 +46,8 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         let tile = bsn! {
             #piece_tile
             Transform { translation }
-            Visibility::default()
-            Pickable::default()
+            Visibility
+            Pickable
             Children [
                 #piece_border
                 Transform { translation: { Vec3::Z * 0.1 } }
@@ -80,7 +81,7 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
                 --
                 #piece_picking_overlay
                 Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)
-                Pickable::default()
+                Pickable
             ]
         };
         tiles.push(Box::new(tile));
@@ -97,10 +98,10 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         Visibility
         DespawnOnExit::<Screen>(Screen::Gameplay)
         Pickable
-        on(piece::drag::on_hover)
-        on(piece::drag::on_blur)
-        on(piece::drag::on_press)
-        on(piece::drag::on_drag)
+        on(gameplay::drag::on_draggable_hover)
+        on(gameplay::drag::on_draggable_blur)
+        on(gameplay::drag::on_draggable_press)
+        on(gameplay::drag::on_draggable_drag)
         on(piece::drag::on_drag_end)
         Children[
             #piece_sprites

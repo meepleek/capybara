@@ -1,21 +1,17 @@
-use bevy::window::WindowResized;
-
 use crate::{
     gameplay::{
-        drag::IgnoreDrag, grid::GridSectionCompletedMsg, ingredient::Ingredient,
-        inventory::InventoryIndex, layout::GameLayout,
+        drag::DragPosition,
+        grid::GridSectionCompletedMsg,
+        ingredient::{INGREDIENT_MAX, Ingredient},
+        inventory::InventoryIndex,
+        layout::GameLayout,
     },
     prelude::*,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (add_ingredient, move_ingredients_on_resize).run_if(in_state(Screen::Gameplay)),
-    );
+    app.add_systems(Update, add_ingredient.run_if(in_state(Screen::Gameplay)));
 }
-
-pub(crate) const INGREDIENT_MAX: u8 = 6;
 
 fn add_ingredient(
     mut section_mr: MessageReader<GridSectionCompletedMsg>,
@@ -34,26 +30,22 @@ fn add_ingredient(
         let position = layout.ingredient_position(idx);
         cmd.spawn_scene(bsn! {
             @{ingredient.icon_scene(position)}
+            DragPosition::new(position)
             ingredient
             InventoryIndex(idx)
             DespawnOnExit<Screen>(Screen::Gameplay)
+            Pickable
+            on(gameplay::drag::on_draggable_hover)
+            on(gameplay::drag::on_draggable_blur)
+            on(gameplay::drag::on_draggable_press)
+            on(gameplay::drag::on_draggable_drag)
+            // on(piece::drag::on_drag_end)
+            Children[
+                #piece_picking_overlay
+                Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)
+                Pickable
+            ]
         });
         idx += 1;
-    }
-}
-
-// todo: need to handle returning ingredients as well
-fn move_ingredients_on_resize(
-    mut resize_mr: MessageReader<WindowResized>,
-    mut ingredient_q: Query<
-        (&mut Transform, &InventoryIndex),
-        (With<Ingredient>, Without<IgnoreDrag>),
-    >,
-    layout: GameLayout,
-) {
-    if resize_mr.clear_any() {
-        for (mut t, idx) in &mut ingredient_q {
-            t.translation = layout.ingredient_position(idx.0).extend(t.translation.z);
-        }
     }
 }
