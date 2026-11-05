@@ -93,7 +93,6 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
 
     for section in sections {
         let ingredient = Ingredient::section_ingredient(section);
-        tracing::warn!(?ingredient, ?section);
         let position = layout.grid_section_position(&grid, section);
         let index = ingredient.spritesheet_idx();
         let ingredient_scene = bsn! {
@@ -115,6 +114,7 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
     cmd.spawn_scene(bsn! {
         grid
         Transform::from_translation(position.extend(0.))
+        Visibility
         DespawnOnExit<Screen>(Screen::Gameplay)
         Children[{ingredients}]
     });
