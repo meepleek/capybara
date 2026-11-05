@@ -2,8 +2,8 @@ use bevy::window::WindowResized;
 
 use crate::{
     gameplay::{
-        ingredient::{Ingredient, grid::GridSectionCompletedMsg, piece::IgnoreDrag},
-        layout::GameLayout,
+        drag::IgnoreDrag, grid::GridSectionCompletedMsg, ingredient::Ingredient,
+        inventory::InventoryIndex, layout::GameLayout,
     },
     prelude::*,
 };
@@ -16,9 +16,6 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub(crate) const INGREDIENT_MAX: u8 = 6;
-
-#[derive(Debug, Component, Clone, FromTemplate, Deref, DerefMut)]
-pub struct InventoryIndex(pub u8);
 
 fn add_ingredient(
     mut section_mr: MessageReader<GridSectionCompletedMsg>,

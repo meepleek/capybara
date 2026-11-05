@@ -1,4 +1,8 @@
-use crate::{gameplay::ingredient::piece::Piece, prelude::*};
+use crate::{
+    gameplay::{layout::GameLayout, piece::Piece},
+    prelude::*,
+};
+use bevy::window::WindowResized;
 
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
@@ -12,9 +16,17 @@ use mplk_grid::{
 
 pub fn plugin(app: &mut App) {
     app.add_plugins(DebugGridPlugin::<IngredientGrid, ()>::default());
-    app.add_systems(Update, IngredientGrid::track_position);
     app.add_message::<GridSectionCompletedMsg>();
+    app.add_systems(Update, IngredientGrid::track_position);
+    app.add_systems(
+        Update,
+        (clear_grid_section, move_grid_on_resize).run_if(in_state(Screen::Gameplay)),
+    );
 }
+
+pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
+pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
+pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GridSection {
@@ -227,6 +239,32 @@ impl TrackPosition for IngredientGrid {
 impl DebugGridValue for IngredientGrid {
     fn value_to_char(_value: &()) -> char {
         'X'
+    }
+}
+
+fn clear_grid_section(
+    mut section_mr: MessageReader<GridSectionCompletedMsg>,
+    mut grid: Single<&mut IngredientGrid>,
+) {
+    // todo: tween out marked tiles
+    for msg in section_mr.read() {
+        match msg.0 {
+            GridSection::Column(col) => or_continue!(grid.clear_col(col)),
+            GridSection::Row(row) => or_continue!(grid.clear_row(row)),
+            GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
+        };
+    }
+}
+
+fn move_grid_on_resize(
+    mut resize_mr: MessageReader<WindowResized>,
+    mut grid_q: Query<(&mut Transform, &IngredientGrid)>,
+    layout: GameLayout,
+) {
+    if resize_mr.clear_any() {
+        for (mut t, grid) in &mut grid_q {
+            t.translation = layout.grid_position(grid).extend(t.translation.z);
+        }
     }
 }
 

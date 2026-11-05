@@ -1,7 +1,7 @@
 use bevy::ecs::system::SystemParam;
 
 use crate::{
-    gameplay::ingredient::grid::{GridSection, IngredientGrid},
+    gameplay::grid::{GridSection, IngredientGrid},
     prelude::*,
 };
 

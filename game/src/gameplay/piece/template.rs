@@ -1,4 +1,4 @@
-use crate::{gameplay::ingredient::piece::Piece, prelude::*};
+use crate::{gameplay::piece::Piece, prelude::*};
 
 #[derive(Debug, Clone, Copy)]
 pub enum PieceTemplate {

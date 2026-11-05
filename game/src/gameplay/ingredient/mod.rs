@@ -1,30 +1,21 @@
-use bevy::window::WindowResized;
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::bit_grid::BitGrid;
 
 use crate::gameplay::{
-    ingredient::grid::{GridSection, GridSectionCompletedMsg, IngredientGrid},
+    grid::{
+        GridSection, INGREDIENT_GRID_SIZE, INGREDIENT_TILE_SIZE, INGREDIENT_TILE_SIZE_F32,
+        IngredientGrid,
+    },
     layout::GameLayout,
 };
 pub use crate::prelude::*;
 
-pub(crate) mod grid;
-pub(crate) mod ingredient_inventory;
-pub(crate) mod piece;
-pub(crate) mod piece_template;
+pub(crate) mod inventory;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((grid::plugin, piece::plugin, ingredient_inventory::plugin));
+    app.add_plugins(inventory::plugin);
     app.add_systems(OnEnter(Screen::Gameplay), setup);
-    app.add_systems(
-        Update,
-        (clear_grid_section, move_grid_on_resize).run_if(in_state(Screen::Gameplay)),
-    );
 }
-
-pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
-pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
-pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
 #[derive(Debug, Component, Clone, Copy)]
 pub enum Ingredient {
@@ -129,30 +120,4 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
         DespawnOnExit<Screen>(Screen::Gameplay)
         Children[{ingredients}]
     });
-}
-
-fn clear_grid_section(
-    mut section_mr: MessageReader<GridSectionCompletedMsg>,
-    mut grid: Single<&mut IngredientGrid>,
-) {
-    // todo: tween out marked tiles
-    for msg in section_mr.read() {
-        match msg.0 {
-            GridSection::Column(col) => or_continue!(grid.clear_col(col)),
-            GridSection::Row(row) => or_continue!(grid.clear_row(row)),
-            GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
-        };
-    }
-}
-
-fn move_grid_on_resize(
-    mut resize_mr: MessageReader<WindowResized>,
-    mut grid_q: Query<(&mut Transform, &IngredientGrid)>,
-    layout: GameLayout,
-) {
-    if resize_mr.clear_any() {
-        for (mut t, grid) in &mut grid_q {
-            t.translation = layout.grid_position(grid).extend(t.translation.z);
-        }
-    }
 }

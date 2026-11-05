@@ -1,7 +1,7 @@
 use bevy_asset_loader::prelude::*;
 use iyes_progress::ProgressPlugin;
 
-use crate::{gameplay::ingredient::INGREDIENT_TILE_SIZE_F32, prelude::*};
+use crate::{gameplay::grid::INGREDIENT_TILE_SIZE_F32, prelude::*};
 
 #[derive(Resource, Debug)]
 pub(super) struct InitialScreen {
