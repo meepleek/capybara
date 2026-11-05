@@ -4,7 +4,7 @@ use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 use crate::gameplay::{
     ingredient::{
         INGREDIENT_TILE_SIZE_F32,
-        grid::{CompletedGridSection, IngredientGrid},
+        grid::{GridSection, IngredientGrid},
         piece_template::PieceTemplate,
     },
     layout::GameLayout,
@@ -249,9 +249,9 @@ fn on_drag_end(
         tracing::warn!(?completed_sections);
         for cs in completed_sections {
             match cs {
-                CompletedGridSection::Column(col) => or_continue!(grid.clear_col(col)),
-                CompletedGridSection::Row(row) => or_continue!(grid.clear_row(row)),
-                CompletedGridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
+                GridSection::Column(col) => or_continue!(grid.clear_col(col)),
+                GridSection::Row(row) => or_continue!(grid.clear_row(row)),
+                GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
             };
         }
         // set position in case it's still easing

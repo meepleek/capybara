@@ -1,6 +1,10 @@
 use bevy::ecs::system::SystemParam;
+use mplk_ecs::transform::TrackPosition;
 
-use crate::{gameplay::ingredient::grid::IngredientGrid, prelude::*};
+use crate::{
+    gameplay::ingredient::grid::{GridSection, IngredientGrid},
+    prelude::*,
+};
 
 #[derive(SystemParam)]
 pub struct GameLayout<'w, 's> {
@@ -16,6 +20,33 @@ impl GameLayout<'_, '_> {
             -window_half.x + grid_half.x + Self::PADDING,
             -window_half.y + grid_half.y + Self::PADDING,
         )
+    }
+
+    pub fn grid_section_position(&self, grid: &IngredientGrid, section: GridSection) -> Vec2 {
+        let grid_half = grid.world_size() / 2.;
+        let grid_ninth = grid.world_size() / 9.;
+        let grid_section_center_offset = grid_ninth / 2.;
+        let grid_section_padding = grid.tile_size() as f32 * 0.7;
+        let tile_size = grid.tile_size() as f32;
+
+        match section {
+            GridSection::Column(col) => {
+                grid_half * Vec2::new(-1., 1.)
+                    + col as f32 * grid_ninth * Vec2::X
+                    + grid_section_center_offset * Vec2::X
+                    + grid_section_padding * Vec2::Y
+            }
+            GridSection::Row(row) => {
+                grid_half - row as f32 * grid_ninth * Vec2::Y - grid_section_center_offset * Vec2::Y
+                    + grid_section_padding * Vec2::X
+            }
+            GridSection::Area(idx) => {
+                let tile = grid.area_idx_to_start_tile(idx).expect("invalid area idx");
+                grid_half * Vec2::new(-1., 1.)
+                    + tile.as_world_vec2() * tile_size
+                    + tile_size * TileCoords::ONE.as_world_vec2() * 1.5
+            }
+        }
     }
 
     pub fn piece_position(&self, idx: u8) -> Vec2 {

@@ -15,8 +15,8 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, IngredientGrid::track_position);
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum CompletedGridSection {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum GridSection {
     Column(i16),
     Row(i16),
     Area(i16),
@@ -43,7 +43,7 @@ impl IngredientGrid {
         &self,
         piece: &Piece,
         tile: TileCoords,
-    ) -> ResourceGridResult<Vec<CompletedGridSection>> {
+    ) -> ResourceGridResult<Vec<GridSection>> {
         let mut preview_grid = self.clone();
         for t in &piece.tiles {
             let t = t + tile;
@@ -56,7 +56,7 @@ impl IngredientGrid {
         &mut self,
         piece: &Piece,
         tile: TileCoords,
-    ) -> ResourceGridResult<Vec<CompletedGridSection>> {
+    ) -> ResourceGridResult<Vec<GridSection>> {
         for t in &piece.tiles {
             tracing::warn!(?t, ?tile);
             let t = t + tile;
@@ -74,20 +74,20 @@ impl IngredientGrid {
         Ok(())
     }
 
-    fn completed_sections(&self, piece: &Piece, tile: TileCoords) -> Vec<CompletedGridSection> {
+    fn completed_sections(&self, piece: &Piece, tile: TileCoords) -> Vec<GridSection> {
         let mut set = HashSet::new();
         for t in &piece.tiles {
             let t = t + tile;
             if self.row_done(t.y).is_ok_and(|done| done) {
-                set.insert(CompletedGridSection::Row(t.y));
+                set.insert(GridSection::Row(t.y));
             }
             if self.col_done(t.x).is_ok_and(|done| done) {
-                set.insert(CompletedGridSection::Column(t.x));
+                set.insert(GridSection::Column(t.x));
             }
             if let Ok(i) = self.tile_to_area_index(t)
                 && self.area_done(i).is_ok_and(|done| done)
             {
-                set.insert(CompletedGridSection::Area(i));
+                set.insert(GridSection::Area(i));
             }
         }
         set.into_iter().collect()
@@ -175,7 +175,7 @@ impl IngredientGrid {
         area_count.element_product() - 1
     }
 
-    fn area_idx_to_start_tile(&self, idx: i16) -> Option<TileCoords> {
+    pub fn area_idx_to_start_tile(&self, idx: i16) -> Option<TileCoords> {
         (idx >= 0 && idx <= self.max_area_idx() as _).then(|| {
             let area_count = self.area_count();
             let idx = idx as u16;

@@ -49,7 +49,7 @@ pub(super) fn plugin(initial_screen: Screen) -> impl Fn(&mut App) {
 
 #[derive(AssetCollection, Resource)]
 pub struct SpriteAssets {
-    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 4, rows = 4))]
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 8, rows = 4))]
     pub layout: Handle<TextureAtlasLayout>,
     #[asset(path = "images/capy.png")]
     pub sheet: Handle<Image>,
