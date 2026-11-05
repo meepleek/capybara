@@ -1,8 +1,11 @@
 use crate::gameplay::drag::DragFocus;
+use crate::gameplay::grid::{GridSection, GridSectionCompletedMsg};
 use crate::gameplay::{grid::IngredientGrid, piece::Piece};
 use crate::prelude::*;
 
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
+use bevy::input::ButtonState;
+use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::{color::palettes::tailwind, dev_tools::states::log_transitions};
 
 #[derive(Default, PartialEq, Eq, Debug)]
@@ -42,7 +45,10 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         reset_scene_on_hotpatch.run_if(on_message::<bevy::ecs::HotPatched>),
     );
-    app.add_systems(Update, (draw_piece_gizmos, draw_debug_ui));
+    app.add_systems(
+        Update,
+        (draw_piece_gizmos, draw_debug_ui, trigger_section_clear),
+    );
     app.add_systems(Update, log_transitions::<Screen>);
 }
 
@@ -137,5 +143,33 @@ fn draw_piece_gizmos(
                 tailwind::AMBER_800,
             );
         }
+    }
+}
+
+fn trigger_section_clear(
+    mut section_mw: MessageWriter<GridSectionCompletedMsg>,
+    mut kb_input_mr: MessageReader<KeyboardInput>,
+) {
+    use GridSection::*;
+
+    for ev in kb_input_mr.read() {
+        if !ev.state.is_pressed() || ev.repeat {
+            continue;
+        }
+
+        let section = match ev.key_code {
+            KeyCode::Digit0 => Area(0),
+            KeyCode::Digit1 => Area(1),
+            KeyCode::Digit2 => Area(2),
+            KeyCode::Digit3 => Area(3),
+            KeyCode::Digit4 => Area(4),
+            KeyCode::Digit5 => Area(5),
+            KeyCode::Digit6 => Area(6),
+            KeyCode::Digit7 => Area(7),
+            KeyCode::Digit8 => Area(8),
+            KeyCode::Digit9 => Column(1),
+            _ => continue,
+        };
+        section_mw.write(GridSectionCompletedMsg(section));
     }
 }
