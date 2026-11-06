@@ -1,12 +1,8 @@
 use bevy::window::WindowResized;
-use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, IgnoreDrag},
-        ingredient::Ingredient,
-        inventory::InventoryIndex,
-        layout::GameLayout,
+        drag::IgnoreDrag, ingredient::Ingredient, inventory::InventoryIndex, layout::GameLayout,
     },
     prelude::*,
 };

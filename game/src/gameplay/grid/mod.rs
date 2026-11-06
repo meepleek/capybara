@@ -30,9 +30,6 @@ pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
 pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
 pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Deref, DerefMut, FromTemplate)]
-pub struct GridTile(pub TileCoords);
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GridSection {
     Column(i16),

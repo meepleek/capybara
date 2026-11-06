@@ -1,10 +1,9 @@
 use bevy::window::WindowResized;
-use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
 use crate::{
     gameplay::{
         drag::{DragFocus, DragPosition, DraggableDrop, IgnoreDrag},
-        grid::{GridSectionCompletedMsg, GridTile, IngredientGrid},
+        grid::{GridSectionCompletedMsg, IngredientGrid},
         inventory::InventoryIndex,
         layout::GameLayout,
         piece::Piece,
@@ -20,14 +19,12 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub(super) fn on_drop(
-    ev: On<DraggableDrop<Piece, GridTile>>,
+    ev: On<DraggableDrop<Piece, IngredientGrid>>,
     mut grid: Single<&mut IngredientGrid>,
-    tile_q: Query<&GridTile>,
     mut section_mw: MessageWriter<GridSectionCompletedMsg>,
 ) {
-    tracing::warn!(?ev, "piece drop");
-    let tile = or_return!(tile_q.get(ev.drop_entity));
-    let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile.0));
+    let tile = or_return!(grid.world_to_tile_center(ev.position));
+    let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile));
     tracing::warn!(?completed_sections);
     for cs in completed_sections {
         section_mw.write(GridSectionCompletedMsg(cs));

@@ -2,7 +2,7 @@ use crate::{
     gameplay::{
         drag::DragPosition,
         grid::GridSectionCompletedMsg,
-        ingredient::{self, INGREDIENT_MAX, Ingredient},
+        ingredient::{INGREDIENT_MAX, Ingredient},
         inventory::InventoryIndex,
         layout::GameLayout,
     },
@@ -25,7 +25,6 @@ fn add_ingredient(
             tracing::info!(count = idx, "at max ingredients");
             return;
         }
-
         let ingredient = Ingredient::section_ingredient(msg.0);
         let position = layout.ingredient_position(idx);
         cmd.spawn_scene(ingredient_scene(ingredient, position, idx));
