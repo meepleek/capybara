@@ -108,6 +108,10 @@ impl GameLayout<'_, '_> {
         )
     }
 
+    pub fn cauldron_ingredient_position(&self, idx: u8) -> Vec2 {
+        Vec2::new(idx as f32 * 30., -90.)
+    }
+
     fn window_half_size(&self) -> Vec2 {
         self.window.size() / 2.
     }

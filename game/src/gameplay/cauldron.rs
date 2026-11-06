@@ -48,7 +48,22 @@ fn shaker_scene(position: Vec2) -> impl Scene {
     }
 }
 
-fn on_ingredient_drop(ev: On<DraggableDrop<Ingredient, Cauldron>>, layout: GameLayout) {
-    // let position = layout.cauldron_ingredient_position(0);
-    // let icon = ev.draggable.icon_scene(self, position);
+fn on_ingredient_drop(
+    ev: On<DraggableDrop<Ingredient, Cauldron>>,
+    layout: GameLayout,
+    mut cmd: Commands,
+    cauldron_q: Query<&Cauldron>,
+) {
+    let idx = cauldron_q.get(ev.target_entity).map_or(0, |c| c.0.len()) as u8;
+    let position = layout.cauldron_ingredient_position(idx);
+    let icon = ev.draggable.icon_scene(position.extend(0.));
+    // let tween = TransformScaleLensSrc::absolute(Vec2::ZERO, Vec2::ONE)
+    //     .duration(ms(160))
+    //     .despawn_target_on_completion();
+    cmd.spawn_scene(bsn! {
+        #cauldron_ingredient
+        ChildOf({ev.target_entity})
+        CauldronIngredient({ev.target_entity})
+        @{icon}
+    });
 }
