@@ -16,7 +16,8 @@ pub(super) fn plugin(app: &mut App) {
         (tick_order_timer, update_order_time).run_if(in_state(Screen::Gameplay)),
     );
     app.add_observer(process_finished_drinks)
-        .add_observer(process_finished_orders);
+        .add_observer(process_finished_order)
+        .add_observer(process_missed_order);
 }
 
 #[derive(Component, Debug, Clone, FromTemplate)]
@@ -101,7 +102,17 @@ fn process_finished_drinks(
     });
 }
 
-fn process_finished_orders(ev: On<OrderFinished>, mut cmd: Commands) {
+fn process_finished_order(ev: On<OrderFinished>, mut cmd: Commands) {
+    cmd.try_remove_from::<Order>(ev.0);
+    cmd.try_insert_to(
+        ev.0,
+        TransformScaleLensSrc::new(Vec2::ZERO)
+            .duration(ms(160))
+            .despawn_target_on_completion(),
+    );
+}
+
+fn process_missed_order(ev: On<OrderMissed>, mut cmd: Commands) {
     cmd.try_remove_from::<Order>(ev.0);
     cmd.try_insert_to(
         ev.0,

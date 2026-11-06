@@ -9,6 +9,7 @@ pub mod grid;
 pub mod ingredient;
 pub mod inventory;
 pub mod layout;
+pub mod level;
 pub mod piece;
 pub mod turn;
 
@@ -23,5 +24,6 @@ pub(super) fn plugin(app: &mut App) {
         cauldron::plugin,
         layout::plugin,
         customer::plugin,
+        level::plugin,
     ));
 }
