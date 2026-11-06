@@ -1,8 +1,10 @@
 use crate::{
-    gameplay::{layout::GameLayout, piece::Piece},
+    gameplay::{
+        layout::{GameLayout, LayoutElementPosition},
+        piece::Piece,
+    },
     prelude::*,
 };
-use bevy::window::WindowResized;
 
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
@@ -22,7 +24,7 @@ pub fn plugin(app: &mut App) {
     app.add_systems(Update, IngredientGrid::track_position);
     app.add_systems(
         Update,
-        (clear_grid_section, move_grid_on_resize).run_if(in_state(Screen::Gameplay)),
+        clear_grid_section.run_if(in_state(Screen::Gameplay)),
     );
 }
 
@@ -228,6 +230,11 @@ impl IngredientGrid {
         }
     }
 }
+impl LayoutElementPosition for IngredientGrid {
+    fn position(layout: &GameLayout, grid: &IngredientGrid) -> Vec2 {
+        layout.grid_position(grid)
+    }
+}
 
 nested_grid!(IngredientGrid, (), grid);
 impl TrackPosition for IngredientGrid {
@@ -255,18 +262,6 @@ fn clear_grid_section(
             GridSection::Row(row) => or_continue!(grid.clear_row(row)),
             GridSection::Area(idx) => or_continue!(grid.clear_area(idx)),
         };
-    }
-}
-
-fn move_grid_on_resize(
-    mut resize_mr: MessageReader<WindowResized>,
-    mut grid_q: Query<(&mut Transform, &IngredientGrid)>,
-    layout: GameLayout,
-) {
-    if resize_mr.clear_any() {
-        for (mut t, grid) in &mut grid_q {
-            t.translation = layout.grid_position(grid).extend(t.translation.z);
-        }
     }
 }
 

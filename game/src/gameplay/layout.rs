@@ -7,6 +7,7 @@ use crate::{
         ingredient::Ingredient,
         inventory::InventoryIndex,
         piece::Piece,
+        shaker::Shaker,
     },
     prelude::*,
 };
@@ -17,6 +18,8 @@ pub(super) fn plugin(app: &mut App) {
         (
             move_inventory_on_resize::<Ingredient>,
             move_inventory_on_resize::<Piece>,
+            move_element_on_resize::<IngredientGrid>,
+            move_element_on_resize::<Shaker>,
         )
             .run_if(in_state(Screen::Gameplay)),
     );
@@ -24,6 +27,10 @@ pub(super) fn plugin(app: &mut App) {
 
 pub trait InventoryPosition {
     fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2;
+}
+
+pub trait LayoutElementPosition {
+    fn position(layout: &GameLayout, grid: &IngredientGrid) -> Vec2;
 }
 
 #[derive(SystemParam)]
@@ -119,6 +126,19 @@ fn move_inventory_on_resize<TInventoryItem: Component + InventoryPosition>(
         for (mut t, idx) in &mut ingredient_q {
             t.translation =
                 TInventoryItem::inventory_position(&layout, idx).extend(t.translation.z);
+        }
+    }
+}
+
+fn move_element_on_resize<TElement: Component + LayoutElementPosition>(
+    mut resize_mr: MessageReader<WindowResized>,
+    mut transform_q: Query<&mut Transform, With<TElement>>,
+    grid: Single<&IngredientGrid>,
+    layout: GameLayout,
+) {
+    if resize_mr.clear_any() {
+        for mut t in &mut transform_q {
+            t.translation = TElement::position(&layout, &grid).extend(t.translation.z);
         }
     }
 }
