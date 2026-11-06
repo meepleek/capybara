@@ -81,7 +81,7 @@ impl GameLayout<'_, '_> {
         let window_half = self.window_half_size();
         Vec2::new(
             window_half.x // right edge
-                - 360. // extra margin
+                - 90. // extra margin
                 - Self::PADDING,
             0.,
         )
