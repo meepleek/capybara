@@ -1,4 +1,8 @@
-use crate::gameplay::grid::{GridSection, INGREDIENT_TILE_SIZE_F32};
+use crate::gameplay::{
+    grid::{GridSection, INGREDIENT_TILE_SIZE_F32},
+    inventory::InventoryIndex,
+    layout::{GameLayout, InventoryPosition},
+};
 pub use crate::prelude::*;
 
 mod drag;
@@ -78,5 +82,10 @@ impl Ingredient {
             Area(7) => Ginger,
             _ => unreachable!("invalid grid section"),
         }
+    }
+}
+impl InventoryPosition for Ingredient {
+    fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2 {
+        layout.ingredient_position(idx.0)
     }
 }
