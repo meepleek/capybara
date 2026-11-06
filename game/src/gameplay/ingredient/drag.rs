@@ -51,7 +51,7 @@ fn on_drop_leave<TDropTarget: Component>(
 //     }
 // }
 
-// todo: on shaker drop, piece drop, grid drop, capy drop, customer drop etc.
+// todo: on cauldron drop, piece drop, grid drop, capy drop, customer drop etc.
 // pub(super) fn on_drop(
 //     ev: On<DraggableDrop<Piece, IngredientGrid>>,
 //     mut grid: Single<&mut IngredientGrid>,

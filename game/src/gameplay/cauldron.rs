@@ -21,7 +21,7 @@ pub(super) fn plugin(app: &mut App) {
 
 impl LayoutElementPosition for Cauldron {
     fn position(layout: &GameLayout, _grid: &IngredientGrid) -> Vec2 {
-        layout.shaker_position()
+        layout.cauldron_position()
     }
 }
 
@@ -44,12 +44,12 @@ pub struct DrinkReady {
 }
 
 fn setup(mut cmd: Commands, layout: GameLayout) {
-    cmd.spawn_scene(shaker_scene(layout.shaker_position()));
+    cmd.spawn_scene(cauldron_scene(layout.cauldron_position()));
 }
 
-fn shaker_scene(position: Vec2) -> impl Scene {
+fn cauldron_scene(position: Vec2) -> impl Scene {
     bsn! {
-        #shaker
+        #cauldron
         Cauldron
         Transform { translation: {position.extend(1.)} }
         from_collection(move |sprites: &SpriteAssets| Sprite {
@@ -108,7 +108,6 @@ fn tick_cauldron_timer(
 ) {
     for (e, cauldron, mut timer) in &mut timer_q {
         timer.tick(time.delta());
-        tracing::warn!(el=?timer.elapsed());
         if timer.just_finished() {
             let mut ingredients = Vec::new();
             for ingredient_e in &cauldron.0 {

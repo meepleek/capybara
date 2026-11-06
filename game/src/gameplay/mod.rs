@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 mod camera;
 pub mod cauldron;
+pub mod customer;
 pub mod drag;
 pub mod grid;
 pub mod ingredient;
@@ -19,5 +20,6 @@ pub(super) fn plugin(app: &mut App) {
         drag::plugin,
         cauldron::plugin,
         layout::plugin,
+        customer::plugin,
     ));
 }

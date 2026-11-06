@@ -3,6 +3,7 @@ use bevy::{ecs::system::SystemParam, window::WindowResized};
 use crate::{
     gameplay::{
         cauldron::Cauldron,
+        customer::{Customer, order::Order},
         drag::{DragPosition, IgnoreDrag},
         grid::{GridSection, IngredientGrid},
         ingredient::Ingredient,
@@ -18,6 +19,8 @@ pub(super) fn plugin(app: &mut App) {
         (
             move_inventory_on_resize::<Ingredient>,
             move_inventory_on_resize::<Piece>,
+            move_inventory_on_resize::<Customer>,
+            move_inventory_on_resize::<Order>,
             move_element_on_resize::<IngredientGrid>,
             move_element_on_resize::<Cauldron>,
         )
@@ -98,7 +101,8 @@ impl GameLayout<'_, '_> {
         )
     }
 
-    pub fn shaker_position(&self) -> Vec2 {
+    // todo: redo to indexed since there could be multiple
+    pub fn cauldron_position(&self) -> Vec2 {
         let window_half = self.window_half_size();
         Vec2::new(
             window_half.x // right edge
@@ -110,6 +114,25 @@ impl GameLayout<'_, '_> {
 
     pub fn cauldron_ingredient_position(&self, idx: u8) -> Vec2 {
         Vec2::new(idx as f32 * 30., -90.)
+    }
+
+    pub fn customer_position(&self, idx: u8) -> Vec2 {
+        let window_half = self.window_half_size();
+        Vec2::new(
+            window_half.x // right edge
+                - 60. // extra margin
+                - 180. * idx as f32 // piece idx offset
+                - Self::PADDING,
+            -window_half.y + 40. + Self::PADDING,
+        )
+    }
+
+    pub fn customer_order_position(&self, idx: u8) -> Vec2 {
+        Vec2::new(0., -80. + 100. * idx as f32)
+    }
+
+    pub fn order_ingredient_position(&self, idx: u8) -> Vec2 {
+        Vec2::new(idx as f32 * 50., 0.)
     }
 
     fn window_half_size(&self) -> Vec2 {
