@@ -34,7 +34,7 @@ fn add_ingredient(
 }
 
 fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Scene {
-    let icon = ingredient.icon_scene(position);
+    let icon = ingredient.icon_scene(position.extend(3.));
     bsn! {
         @{icon}
         DragPosition::new(position)

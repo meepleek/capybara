@@ -21,7 +21,7 @@ fn shaker_scene(position: Vec2) -> impl Scene {
     bsn! {
         #shaker
         Shaker
-        Transform { translation: {position.extend(0.1)} }
+        Transform { translation: {position.extend(1.)} }
         from_collection(move |sprites: &SpriteAssets| Sprite {
             image: sprites.bar_sheet.clone(),
             texture_atlas: Some(TextureAtlas {
