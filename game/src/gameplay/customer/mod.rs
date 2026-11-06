@@ -21,7 +21,6 @@ impl InventoryPosition for Customer {
     }
 }
 
-#[expect(dead_code)]
 pub enum CustomerKind {
     Regular,
     Fast,

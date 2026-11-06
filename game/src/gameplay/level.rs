@@ -16,6 +16,13 @@ pub enum LevelKind {
     Tutorial(TutorialLevelData),
     Regular(LevelData),
 }
+impl LevelKind {
+    pub fn levels() -> Vec<LevelKind> {
+        use LevelKind::*;
+
+        vec![Tutorial(TutorialLevelData::intro_to_basics())]
+    }
+}
 
 #[expect(dead_code)]
 pub struct LevelData {
