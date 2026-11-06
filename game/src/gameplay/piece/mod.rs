@@ -2,7 +2,13 @@ mod drag;
 pub(crate) mod spawn;
 pub(crate) mod template;
 
-use crate::prelude::*;
+use crate::{
+    gameplay::{
+        inventory::InventoryIndex,
+        layout::{GameLayout, InventoryPosition},
+    },
+    prelude::*,
+};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((spawn::plugin, drag::plugin));
@@ -58,6 +64,11 @@ impl Piece {
         }
         // todo: pivot as well?
         // todo!()
+    }
+}
+impl InventoryPosition for Piece {
+    fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2 {
+        layout.piece_position(idx.0)
     }
 }
 

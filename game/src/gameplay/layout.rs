@@ -1,9 +1,16 @@
 use bevy::ecs::system::SystemParam;
 
 use crate::{
-    gameplay::grid::{GridSection, IngredientGrid},
+    gameplay::{
+        grid::{GridSection, IngredientGrid},
+        inventory::InventoryIndex,
+    },
     prelude::*,
 };
+
+pub trait InventoryPosition {
+    fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2;
+}
 
 #[derive(SystemParam)]
 pub struct GameLayout<'w, 's> {
@@ -74,7 +81,7 @@ impl GameLayout<'_, '_> {
         let window_half = self.window_half_size();
         Vec2::new(
             window_half.x // right edge
-                - 60. // extra margin
+                - 360. // extra margin
                 - Self::PADDING,
             0.,
         )

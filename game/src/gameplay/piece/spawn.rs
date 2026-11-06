@@ -4,7 +4,7 @@ use crate::{
     gameplay::{
         self,
         drag::DragPosition,
-        grid::INGREDIENT_TILE_SIZE_F32,
+        grid::{GridTile, INGREDIENT_TILE_SIZE_F32},
         inventory::InventoryIndex,
         layout::GameLayout,
         piece::{self, INVENTORY_MAX, Piece, template::PieceTemplate},
@@ -102,7 +102,8 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(piece::drag::on_drag_end)
+        on(gameplay::drag::on_draggable_drag_end::<Piece, GridTile>)
+        on(piece::drag::on_drop)
         Children[
             #piece_sprites
             Visibility

@@ -6,6 +6,7 @@ use crate::prelude::*;
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 use bevy::input::keyboard::{KeyCode, KeyboardInput};
 use bevy::{color::palettes::tailwind, dev_tools::states::log_transitions};
+use mplk_grid::debug::DebugGridPlugin;
 
 #[derive(Default, PartialEq, Eq, Debug)]
 pub enum HotpatchMode {
@@ -29,7 +30,10 @@ impl Default for DebugOptions {
 }
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins(DebugPickingPlugin);
+    app.add_plugins((
+        DebugPickingPlugin,
+        DebugGridPlugin::<IngredientGrid, ()>::default(),
+    ));
     app.init_resource::<DebugOptions>();
     app.insert_resource(DebugPickingMode::Normal);
     app.add_systems(

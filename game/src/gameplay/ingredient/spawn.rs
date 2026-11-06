@@ -46,7 +46,7 @@ fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Sce
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(ingredient::drag::on_drag_enter)
+        // on(ingredient::drag::on_drag_enter)
         // on(piece::drag::on_drag_end)
         Children[
             #piece_picking_overlay

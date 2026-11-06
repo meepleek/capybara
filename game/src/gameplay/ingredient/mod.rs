@@ -1,13 +1,4 @@
-use mplk_ecs::transform::TrackPosition;
-use mplk_grid::bit_grid::BitGrid;
-
-use crate::gameplay::{
-    grid::{
-        GridSection, INGREDIENT_GRID_SIZE, INGREDIENT_TILE_SIZE, INGREDIENT_TILE_SIZE_F32,
-        IngredientGrid,
-    },
-    layout::GameLayout,
-};
+use crate::gameplay::grid::{GridSection, INGREDIENT_TILE_SIZE_F32};
 pub use crate::prelude::*;
 
 mod drag;
@@ -15,12 +6,11 @@ mod spawn;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((spawn::plugin, drag::plugin));
-    app.add_systems(OnEnter(Screen::Gameplay), setup);
 }
 
 pub(crate) const INGREDIENT_MAX: u8 = 6;
 
-#[derive(Debug, Component, Clone, Copy)]
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Ingredient {
     Honey,
     HoneyPlus,
@@ -89,37 +79,4 @@ impl Ingredient {
             _ => unreachable!("invalid grid section"),
         }
     }
-}
-
-fn setup(mut cmd: Commands, layout: GameLayout) {
-    let grid = BitGrid::new(
-        (INGREDIENT_GRID_SIZE, INGREDIENT_GRID_SIZE),
-        INGREDIENT_TILE_SIZE,
-    );
-    let mut grid = IngredientGrid::new(grid, Vec2::ZERO).unwrap();
-    let position = layout.grid_position(&grid);
-    grid.set_position(position);
-
-    let mut ingredients: Vec<Box<dyn Scene>> = Vec::new();
-    let mut sections: Vec<_> = [1, 4, 7]
-        .into_iter()
-        .map(|i| [GridSection::Row(i), GridSection::Column(i)])
-        .flatten()
-        .collect();
-    sections.extend((0..9).map(GridSection::Area));
-
-    for section in sections {
-        let ingredient = Ingredient::section_ingredient(section);
-        let position = layout.grid_section_position(&grid, section);
-        let ingredient_scene = ingredient.icon_scene(position);
-        ingredients.push(Box::new(ingredient_scene));
-    }
-
-    cmd.spawn_scene(bsn! {
-        grid
-        Transform::from_translation(position.extend(0.))
-        Visibility
-        DespawnOnExit<Screen>(Screen::Gameplay)
-        Children[{ingredients}]
-    });
 }

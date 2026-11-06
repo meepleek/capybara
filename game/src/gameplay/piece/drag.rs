@@ -3,8 +3,8 @@ use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, IgnoreDrag},
-        grid::{GridSectionCompletedMsg, IngredientGrid},
+        drag::{DragFocus, DragPosition, DraggableDrop, IgnoreDrag},
+        grid::{GridSectionCompletedMsg, GridTile, IngredientGrid},
         inventory::InventoryIndex,
         layout::GameLayout,
         piece::Piece,
@@ -19,53 +19,18 @@ pub(super) fn plugin(app: &mut App) {
     );
 }
 
-pub(super) fn on_drag_end(
-    ev: On<PointerDragEnd>,
-    mut piece_q: Query<
-        (&mut Transform, &Piece, &mut DragPosition, &InventoryIndex),
-        Without<IgnoreDrag>,
-    >,
+pub(super) fn on_drop(
+    ev: On<DraggableDrop<Piece, GridTile>>,
     mut grid: Single<&mut IngredientGrid>,
-    mut cmd: Commands,
-    layout: GameLayout,
+    tile_q: Query<&GridTile>,
     mut section_mw: MessageWriter<GridSectionCompletedMsg>,
 ) {
-    let (mut t, piece, mut drag, piece_idx) = or_return!(piece_q.get_mut(ev.entity));
-    if let Some(snapped_pos) = drag.snapped_position
-        && let Some(tile) = grid.world_to_tile(snapped_pos)
-    {
-        let completed_sections = or_return!(grid.place_piece(piece, tile));
-        tracing::warn!(?completed_sections);
-        for cs in completed_sections {
-            section_mw.write(GridSectionCompletedMsg(cs));
-        }
-        // set position in case it's still easing
-        t.translation = snapped_pos.extend(t.translation.z);
-        cmd.try_remove_from::<Piece>(ev.entity);
-        cmd.try_insert_to(
-            ev.entity,
-            TransformScaleLensSrc::new(Vec2::ZERO)
-                .duration(ms(160))
-                .despawn_target_on_completion(),
-        );
-    } else {
-        cmd.try_remove_from::<DragFocus>(ev.entity);
-        let start_pos = layout.piece_position(piece_idx.0);
-        drag.drag_position = start_pos;
-        let tween_duration = ms(330);
-        cmd.try_insert_to(
-            ev.entity,
-            (
-                TransformPositionLensSrc::new(start_pos)
-                    .duration(tween_duration)
-                    .easing(EaseFunction::BackOut),
-                IgnoreDrag,
-            ),
-        );
-        cmd.delayed()
-            .duration(tween_duration)
-            .entity(ev.entity)
-            .try_remove::<IgnoreDrag>();
+    tracing::warn!(?ev, "piece drop");
+    let tile = or_return!(tile_q.get(ev.drop_entity));
+    let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile.0));
+    tracing::warn!(?completed_sections);
+    for cs in completed_sections {
+        section_mw.write(GridSectionCompletedMsg(cs));
     }
 }
 
@@ -88,11 +53,10 @@ fn move_pieces_on_resize(
 }
 
 fn snap_pieces_to_grid(
-    mut piece_q: Query<(&mut Transform, &Piece, &mut DragPosition), With<DragFocus>>,
+    mut piece_q: Query<(&Piece, &mut DragPosition), With<DragFocus>>,
     grid: Single<&IngredientGrid>,
-    time: Res<Time>,
 ) {
-    for (mut t, piece, mut drag) in &mut piece_q {
+    for (piece, mut drag) in &mut piece_q {
         if let Some(tile) = grid.world_to_tile(drag.drag_position)
             && let Ok(_completed_sections) = grid.preview_piece_placement(piece, tile)
         {
@@ -101,13 +65,5 @@ fn snap_pieces_to_grid(
         } else {
             drag.snapped_position = None;
         }
-
-        let target = drag.snapped_position.unwrap_or(drag.drag_position);
-        t.translation = asymptotic_smoothing_with_delta_time(
-            t.translation,
-            target.extend(t.translation.z),
-            0.4,
-            time.delta_secs(),
-        );
     }
 }

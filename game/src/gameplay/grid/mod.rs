@@ -7,15 +7,17 @@ use bevy::window::WindowResized;
 use mplk_ecs::transform::TrackPosition;
 use mplk_grid::{
     bit_grid::{BitGrid, BitGridMask},
-    debug::{DebugGridPlugin, DebugGridValue},
+    debug::DebugGridValue,
     error::GridTileError,
     nested_grid,
     prelude::*,
     tile::TileIterator,
 };
 
+pub mod spawn;
+
 pub fn plugin(app: &mut App) {
-    app.add_plugins(DebugGridPlugin::<IngredientGrid, ()>::default());
+    app.add_plugins(spawn::plugin);
     app.add_message::<GridSectionCompletedMsg>();
     app.add_systems(Update, IngredientGrid::track_position);
     app.add_systems(
@@ -27,6 +29,9 @@ pub fn plugin(app: &mut App) {
 pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;
 pub(crate) const INGREDIENT_TILE_SIZE: u16 = 64;
 pub(crate) const INGREDIENT_TILE_SIZE_F32: f32 = INGREDIENT_TILE_SIZE as _;
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Deref, DerefMut, FromTemplate)]
+pub struct GridTile(pub TileCoords);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GridSection {
