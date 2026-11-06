@@ -2,7 +2,7 @@ use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
 use crate::{
     gameplay::{
-        grid::{INGREDIENT_GRID_SIZE, INGREDIENT_TILE_SIZE},
+        grid::INGREDIENT_TILE_SIZE,
         ingredient::{CommonIngredient, Ingredient},
         level::Tool,
         piece::template::PieceTemplate,
@@ -24,17 +24,16 @@ impl TutorialLevelData {
         use TutorialStep::*;
 
         let grid = r"
-xx.x.x.xx
-x.x.x.x.x
-xx.x.x.xx
-x.x.x.x.x
-xx.x.x.xx
-x.x.x.x.x
-xx.x.x.xx
-x.x.x.x.x
-xx.x.x.xx
+##.#.#.##
+#.#.#.#.#
+##.#.#.##
+#.#.#.#.#
+##.#.#.##
+#.#.#.#.#
+##.#.#.##
+#.#.#.#.#
+##.#.#.##
 ";
-
         TutorialLevelData {
             initial_board: TutorialBoardState {
                 grid: Self::parse_grid(grid),
