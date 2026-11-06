@@ -20,3 +20,12 @@ impl InventoryPosition for Customer {
         layout.customer_position(idx.0)
     }
 }
+
+#[expect(dead_code)]
+pub enum CustomerKind {
+    Regular,
+    Fast,
+    Snobby,
+    Critic,
+    Tutorial,
+}

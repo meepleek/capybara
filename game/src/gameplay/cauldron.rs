@@ -4,7 +4,7 @@ use crate::{
     gameplay::{
         drag::DraggableDrop,
         grid::IngredientGrid,
-        ingredient::Ingredient,
+        ingredient::CommonIngredient,
         layout::{GameLayout, LayoutElementPosition},
     },
     prelude::*,
@@ -36,16 +36,16 @@ impl Default for CauldronTimer {
 }
 
 #[derive(Component, Deref, DerefMut, Clone, FromTemplate)]
-pub struct CauldronIngredient(pub Ingredient);
+pub struct CauldronIngredient(pub CommonIngredient);
 
 #[derive(Event)]
 pub struct DrinkReady {
-    pub ingredients: Vec<Ingredient>,
+    pub ingredients: Vec<CommonIngredient>,
 }
 
 #[derive(Event, Debug)]
 pub struct OrderlessDrink {
-    pub ingredients: Vec<Ingredient>,
+    pub ingredients: Vec<CommonIngredient>,
 }
 
 fn setup(mut cmd: Commands, layout: GameLayout) {
@@ -72,7 +72,7 @@ fn cauldron_scene(position: Vec2) -> impl Scene {
 }
 
 fn on_ingredient_drop(
-    ev: On<DraggableDrop<Ingredient, Cauldron>>,
+    ev: On<DraggableDrop<CommonIngredient, Cauldron>>,
     layout: GameLayout,
     mut cmd: Commands,
     cauldron_q: Query<&Cauldron>,

@@ -3,7 +3,7 @@ use crate::{
         cauldron::Cauldron,
         drag::DragPosition,
         grid::GridSectionCompletedMsg,
-        ingredient::{INGREDIENT_MAX, Ingredient},
+        ingredient::{CommonIngredient, INGREDIENT_MAX},
         inventory::InventoryIndex,
         layout::GameLayout,
     },
@@ -16,7 +16,7 @@ pub(super) fn plugin(app: &mut App) {
 
 fn add_ingredient(
     mut section_mr: MessageReader<GridSectionCompletedMsg>,
-    ingredient_q: Query<(), With<Ingredient>>,
+    ingredient_q: Query<(), With<CommonIngredient>>,
     mut cmd: Commands,
     layout: GameLayout,
 ) {
@@ -26,14 +26,14 @@ fn add_ingredient(
             tracing::info!(count = idx, "at max ingredients");
             return;
         }
-        let ingredient = Ingredient::section_ingredient(msg.0);
+        let ingredient = CommonIngredient::section_ingredient(msg.0);
         let position = layout.ingredient_position(idx);
         cmd.spawn_scene(ingredient_scene(ingredient, position, idx));
         idx += 1;
     }
 }
 
-fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Scene {
+fn ingredient_scene(ingredient: CommonIngredient, position: Vec2, idx: u8) -> impl Scene {
     let icon = ingredient.icon_scene(position.extend(3.));
     bsn! {
         @{icon}
@@ -46,7 +46,7 @@ fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Sce
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(gameplay::drag::on_draggable_drag_end::<Ingredient, Cauldron>)
+        on(gameplay::drag::on_draggable_drag_end::<CommonIngredient, Cauldron>)
         Children[
             #piece_picking_overlay
             Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)

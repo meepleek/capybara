@@ -2,7 +2,7 @@ use crate::{
     gameplay::{
         cauldron::Cauldron,
         drag::{DragFocus, DragPosition, SnapData},
-        ingredient::Ingredient,
+        ingredient::CommonIngredient,
     },
     prelude::*,
 };
@@ -14,7 +14,7 @@ pub(super) fn plugin(app: &mut App) {
 
 fn on_drop_enter<TDropTarget: Component>(
     ev: On<PointerOver>,
-    mut ingredient_q: Query<&mut DragPosition, (With<Ingredient>, With<DragFocus>)>,
+    mut ingredient_q: Query<&mut DragPosition, (With<CommonIngredient>, With<DragFocus>)>,
     target_q: Query<(Entity, &GlobalTransform), With<TDropTarget>>,
 ) {
     let (target_e, drop_t) = or_return_quiet!(target_q.get(ev.entity));
@@ -27,7 +27,7 @@ fn on_drop_enter<TDropTarget: Component>(
 
 fn on_drop_leave<TDropTarget: Component>(
     ev: On<PointerLeave>,
-    mut ingredient_q: Query<&mut DragPosition, (With<Ingredient>, With<DragFocus>)>,
+    mut ingredient_q: Query<&mut DragPosition, (With<CommonIngredient>, With<DragFocus>)>,
     droppable_q: Query<(), With<TDropTarget>>,
 ) {
     or_return_quiet!(droppable_q.get(ev.entity));

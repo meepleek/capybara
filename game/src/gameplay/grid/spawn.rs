@@ -3,7 +3,7 @@ use mplk_grid::bit_grid::BitGrid;
 
 use crate::gameplay::{
     grid::{GridSection, INGREDIENT_GRID_SIZE, INGREDIENT_TILE_SIZE, IngredientGrid},
-    ingredient::Ingredient,
+    ingredient::CommonIngredient,
     layout::GameLayout,
 };
 pub use crate::prelude::*;
@@ -30,7 +30,7 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
     sections.extend((0..9).map(GridSection::Area));
 
     for section in sections {
-        let ingredient = Ingredient::section_ingredient(section);
+        let ingredient = CommonIngredient::section_ingredient(section);
         let position = layout.grid_section_position(&grid, section);
         let ingredient_scene = ingredient.icon_scene(position.extend(0.));
         ingredient_icons.push(Box::new(ingredient_scene));

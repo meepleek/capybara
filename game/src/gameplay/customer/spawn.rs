@@ -4,7 +4,7 @@ use crate::{
             Customer,
             order::{NewOrder, order_scene},
         },
-        ingredient::Ingredient,
+        ingredient::CommonIngredient,
         inventory::InventoryIndex,
         layout::GameLayout,
     },
@@ -19,7 +19,7 @@ pub(super) fn plugin(app: &mut App) {
 pub const CUSTOMER_COUNT: u8 = 3;
 
 fn setup(mut cmd: Commands, layout: GameLayout) {
-    use Ingredient::*;
+    use CommonIngredient::*;
 
     let mut customer_e = Entity::PLACEHOLDER;
     for i in 0..CUSTOMER_COUNT {

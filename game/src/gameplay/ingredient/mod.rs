@@ -15,40 +15,26 @@ pub(super) fn plugin(app: &mut App) {
 pub(crate) const INGREDIENT_MAX: u8 = 6;
 
 #[derive(Debug, Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub enum Ingredient {
+pub enum CommonIngredient {
     #[default]
     Honey,
-    HoneyPlus,
     Apple,
-    Pineapple,
     Ginger,
-    Jalapeno,
     Orange,
-    Lime,
     Air,
-    AirPlus,
     Coffee,
-    Chocolate,
     Water,
-    Ice,
 }
-impl Ingredient {
+impl CommonIngredient {
     pub fn spritesheet_idx(&self) -> usize {
         match self {
-            Ingredient::Honey => 8,
-            Ingredient::HoneyPlus => 16,
-            Ingredient::Apple => 9,
-            Ingredient::Pineapple => 17,
-            Ingredient::Ginger => 10,
-            Ingredient::Jalapeno => 18,
-            Ingredient::Orange => 11,
-            Ingredient::Lime => 19,
-            Ingredient::Air => 12,
-            Ingredient::AirPlus => 20,
-            Ingredient::Coffee => 13,
-            Ingredient::Chocolate => 21,
-            Ingredient::Water => 14,
-            Ingredient::Ice => 22,
+            CommonIngredient::Honey => 8,
+            CommonIngredient::Apple => 9,
+            CommonIngredient::Ginger => 10,
+            CommonIngredient::Orange => 11,
+            CommonIngredient::Air => 12,
+            CommonIngredient::Coffee => 13,
+            CommonIngredient::Water => 14,
         }
     }
 
@@ -69,9 +55,9 @@ impl Ingredient {
         }
     }
 
-    pub fn section_ingredient(section: GridSection) -> Ingredient {
+    pub fn section_ingredient(section: GridSection) -> CommonIngredient {
+        use CommonIngredient::*;
         use GridSection::*;
-        use Ingredient::*;
 
         match section {
             Column(0..=2) | Row(6..=8) | Area(1) => Apple,
@@ -84,9 +70,67 @@ impl Ingredient {
             _ => unreachable!("invalid grid section"),
         }
     }
+
+    pub fn fuse(self) -> FusedIngredient {
+        use CommonIngredient::*;
+        use FusedIngredient::*;
+
+        match self {
+            Apple => Pineapple,
+            Orange => Lime,
+            Water => Ice,
+            Honey => HoneyPlus,
+            Ginger => Jalapeno,
+            Air => AirPlus,
+            Coffee => Chocolate,
+        }
+    }
 }
-impl InventoryPosition for Ingredient {
+impl InventoryPosition for CommonIngredient {
     fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2 {
         layout.ingredient_position(idx.0)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum FusedIngredient {
+    #[default]
+    Pineapple,
+    Lime,
+    Ice,
+    HoneyPlus,
+    Jalapeno,
+    AirPlus,
+    Chocolate,
+}
+impl FusedIngredient {
+    pub fn downgrade(self) -> CommonIngredient {
+        use CommonIngredient::*;
+        use FusedIngredient::*;
+
+        match self {
+            Pineapple => Apple,
+            Lime => Orange,
+            Ice => Water,
+            HoneyPlus => Honey,
+            Jalapeno => Ginger,
+            AirPlus => Air,
+            Chocolate => Coffee,
+        }
+    }
+
+    pub fn spritesheet_idx(&self) -> usize {
+        self.downgrade().spritesheet_idx() + 8 // next row down in the sheet
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Ingredient {
+    Common(CommonIngredient),
+    Fused(FusedIngredient),
+}
+impl Default for Ingredient {
+    fn default() -> Self {
+        Self::Common(CommonIngredient::Apple)
     }
 }
