@@ -1,6 +1,6 @@
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, DraggableDrop},
+        drag::{DragFocus, DragPosition, DraggableDrop, SnapData},
         grid::{GridSectionCompletedMsg, IngredientGrid},
         piece::Piece,
     },
@@ -12,6 +12,7 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
     );
+    app.add_observer(on_drop);
 }
 
 pub(super) fn on_drop(
@@ -29,16 +30,20 @@ pub(super) fn on_drop(
 
 fn snap_pieces_to_grid(
     mut piece_q: Query<(&Piece, &mut DragPosition), With<DragFocus>>,
-    grid: Single<&IngredientGrid>,
+    grid: Single<(Entity, &IngredientGrid)>,
 ) {
+    let (grid_e, grid) = *grid;
     for (piece, mut drag) in &mut piece_q {
         if let Some(tile) = grid.world_to_tile(drag.drag_position)
             && let Ok(_completed_sections) = grid.preview_piece_placement(piece, tile)
         {
             let tile_pos = or_continue!(grid.tile_to_world(tile));
-            drag.snapped_position = Some(tile_pos);
+            drag.snapped_data = Some(SnapData {
+                position: tile_pos,
+                entity: grid_e,
+            });
         } else {
-            drag.snapped_position = None;
+            drag.snapped_data = None;
         }
     }
 }

@@ -40,25 +40,25 @@ macro_rules! relationship_1_to_1 {
 #[macro_export]
 macro_rules! relationship_1_to_n {
     ($source:ident, $target:ident) => {
-        #[derive(Component, Debug, Reflect)]
+        #[derive(Component, Debug, Reflect, Clone, FromTemplate)]
         #[reflect(Component)]
         #[relationship(relationship_target = $target)]
         pub struct $source(pub Entity);
 
         #[allow(dead_code)]
-        impl RelationshipEntity for $source {
+        impl $crate::relationship::RelationshipEntity for $source {
             fn entity(&self) -> Entity {
                 self.0
             }
         }
 
-        #[derive(Component, Default, Debug, Reflect)]
+        #[derive(Component, Default, Debug, Reflect, Clone, FromTemplate)]
         #[reflect(Component)]
         #[relationship_target(relationship = $source, linked_spawn)]
         pub struct $target(Vec<Entity>);
 
         #[allow(dead_code)]
-        impl RelationshipEntities for $target {
+        impl $crate::relationship::RelationshipEntities for $target {
             fn entities(&self) -> &[Entity] {
                 &self.0
             }

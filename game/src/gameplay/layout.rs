@@ -2,12 +2,12 @@ use bevy::{ecs::system::SystemParam, window::WindowResized};
 
 use crate::{
     gameplay::{
+        cauldron::Cauldron,
         drag::IgnoreDrag,
         grid::{GridSection, IngredientGrid},
         ingredient::Ingredient,
         inventory::InventoryIndex,
         piece::Piece,
-        shaker::Shaker,
     },
     prelude::*,
 };
@@ -19,7 +19,7 @@ pub(super) fn plugin(app: &mut App) {
             move_inventory_on_resize::<Ingredient>,
             move_inventory_on_resize::<Piece>,
             move_element_on_resize::<IngredientGrid>,
-            move_element_on_resize::<Shaker>,
+            move_element_on_resize::<Cauldron>,
         )
             .run_if(in_state(Screen::Gameplay)),
     );

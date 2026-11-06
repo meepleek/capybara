@@ -27,17 +27,23 @@ pub struct IgnoreDrag;
 #[derive(Component, Debug)]
 pub struct InitialTranslationZ(f32);
 
+#[derive(Debug, Clone)]
+pub struct SnapData {
+    pub position: Vec2,
+    pub entity: Entity,
+}
+
 #[derive(Debug, Component, Clone, Default)]
 #[require(Transform)]
 pub struct DragPosition {
     pub drag_position: Vec2,
-    pub snapped_position: Option<Vec2>,
+    pub snapped_data: Option<SnapData>,
 }
 impl DragPosition {
     pub fn new(drag_position: Vec2) -> Self {
         Self {
             drag_position,
-            snapped_position: None,
+            snapped_data: None,
         }
     }
 }
@@ -50,17 +56,17 @@ pub struct DraggableDrop<TDraggable: Component + InventoryPosition + Clone, TDro
 {
     pub position: Vec2,
     #[event_target]
-    pub drop_entity: Entity,
+    pub target_entity: Entity,
     pub draggable: TDraggable,
     _drop_phantom: PhantomData<TDropTarget>,
 }
 impl<TDraggable: Component + InventoryPosition + Clone, TDropTarget: Component>
     DraggableDrop<TDraggable, TDropTarget>
 {
-    pub fn new(draggable: TDraggable, drop_entity: Entity, position: Vec2) -> Self {
+    pub fn new(draggable: TDraggable, target_entity: Entity, position: Vec2) -> Self {
         Self {
             position,
-            drop_entity,
+            target_entity,
             draggable,
             _drop_phantom: default(),
         }
@@ -140,7 +146,11 @@ pub(super) fn on_draggable_drag(
     let d = ev.delta;
     drag.drag_position += Vec2::new(d.x, -d.y);
 
-    let target = drag.snapped_position.unwrap_or(drag.drag_position);
+    let target = drag
+        .snapped_data
+        .as_ref()
+        .map(|s| s.position)
+        .unwrap_or(drag.drag_position);
     t.translation = asymptotic_smoothing_with_delta_time(
         t.translation,
         target.extend(t.translation.z),
@@ -150,7 +160,7 @@ pub(super) fn on_draggable_drag(
 }
 
 pub(super) fn on_draggable_drag_end<
-    TDraggable: Component + InventoryPosition + Clone,
+    TDraggable: Component + InventoryPosition + Clone + Debug,
     TDropTarget: Component,
 >(
     ev: On<PointerDragEnd>,
@@ -167,19 +177,20 @@ pub(super) fn on_draggable_drag_end<
     layout: GameLayout,
 ) {
     let (mut t, draggable, mut drag, idx) = or_return!(piece_q.get_mut(ev.entity));
-    if let Some(snapped_pos) = drag.snapped_position {
-        let mut e_cmd = or_return!(cmd.get_entity(ev.entity));
+    if let Some(snap_data) = drag.snapped_data.as_ref() {
+        let mut dragged_e_cmd = or_return!(cmd.get_entity(ev.entity));
         // set position in case it's still easing
-        t.translation = snapped_pos.extend(t.translation.z);
+        t.translation = snap_data.position.extend(t.translation.z);
 
-        e_cmd.try_remove::<TDraggable>();
-        e_cmd.try_insert(
+        dragged_e_cmd.try_remove::<TDraggable>();
+        dragged_e_cmd.try_insert(
             TransformScaleLensSrc::new(Vec2::ZERO)
                 .duration(ms(160))
                 .despawn_target_on_completion(),
         );
-        e_cmd.trigger(|e| {
-            DraggableDrop::<TDraggable, TDropTarget>::new(draggable.clone(), e, snapped_pos)
+        let mut target_e_cmd = or_return!(cmd.get_entity(snap_data.entity));
+        target_e_cmd.trigger(|e| {
+            DraggableDrop::<TDraggable, TDropTarget>::new(draggable.clone(), e, snap_data.position)
         });
     } else {
         cmd.try_remove_from::<DragFocus>(ev.entity);

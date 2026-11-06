@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
 mod camera;
+pub mod cauldron;
 pub mod drag;
 pub mod grid;
 pub mod ingredient;
 pub mod inventory;
 pub mod layout;
 pub mod piece;
-pub mod shaker;
 pub mod turn;
 
 pub(super) fn plugin(app: &mut App) {
@@ -17,7 +17,7 @@ pub(super) fn plugin(app: &mut App) {
         grid::plugin,
         piece::plugin,
         drag::plugin,
-        shaker::plugin,
+        cauldron::plugin,
         layout::plugin,
     ));
 }

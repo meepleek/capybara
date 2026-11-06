@@ -1,11 +1,11 @@
 use crate::{
     gameplay::{
+        cauldron::Cauldron,
         drag::DragPosition,
         grid::GridSectionCompletedMsg,
         ingredient::{INGREDIENT_MAX, Ingredient},
         inventory::InventoryIndex,
         layout::GameLayout,
-        shaker::Shaker,
     },
     prelude::*,
 };
@@ -46,7 +46,7 @@ fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Sce
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(gameplay::drag::on_draggable_drag_end::<Ingredient, Shaker>)
+        on(gameplay::drag::on_draggable_drag_end::<Ingredient, Cauldron>)
         Children[
             #piece_picking_overlay
             Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)

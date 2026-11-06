@@ -7,7 +7,7 @@ use crate::{
         grid::{INGREDIENT_TILE_SIZE_F32, IngredientGrid},
         inventory::InventoryIndex,
         layout::GameLayout,
-        piece::{self, INVENTORY_MAX, Piece, template::PieceTemplate},
+        piece::{INVENTORY_MAX, Piece, template::PieceTemplate},
     },
     prelude::*,
 };
@@ -103,7 +103,6 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
         on(gameplay::drag::on_draggable_drag_end::<Piece, IngredientGrid>)
-        on(piece::drag::on_drop)
         Children[
             #piece_sprites
             Visibility

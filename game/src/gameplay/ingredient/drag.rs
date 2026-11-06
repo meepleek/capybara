@@ -1,25 +1,28 @@
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition},
+        cauldron::Cauldron,
+        drag::{DragFocus, DragPosition, SnapData},
         ingredient::Ingredient,
-        shaker::Shaker,
     },
     prelude::*,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(on_drop_enter::<Shaker>)
-        .add_observer(on_drop_leave::<Shaker>);
+    app.add_observer(on_drop_enter::<Cauldron>)
+        .add_observer(on_drop_leave::<Cauldron>);
 }
 
 fn on_drop_enter<TDropTarget: Component>(
     ev: On<PointerOver>,
     mut ingredient_q: Query<&mut DragPosition, (With<Ingredient>, With<DragFocus>)>,
-    droppable_q: Query<&GlobalTransform, With<TDropTarget>>,
+    target_q: Query<(Entity, &GlobalTransform), With<TDropTarget>>,
 ) {
-    let drop_t = or_return_quiet!(droppable_q.get(ev.entity));
+    let (target_e, drop_t) = or_return_quiet!(target_q.get(ev.entity));
     let mut drag = or_return_quiet!(ingredient_q.single_mut());
-    drag.snapped_position = Some(drop_t.translation().truncate());
+    drag.snapped_data = Some(SnapData {
+        position: drop_t.translation().truncate(),
+        entity: target_e,
+    });
 }
 
 fn on_drop_leave<TDropTarget: Component>(
@@ -29,7 +32,7 @@ fn on_drop_leave<TDropTarget: Component>(
 ) {
     or_return_quiet!(droppable_q.get(ev.entity));
     let mut drag = or_return_quiet!(ingredient_q.single_mut());
-    drag.snapped_position = None;
+    drag.snapped_data = None;
 }
 
 // fn snap_pieces_to_grid(
