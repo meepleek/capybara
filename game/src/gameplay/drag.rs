@@ -94,16 +94,14 @@ fn restore_z_on_drag_rmv(
 }
 
 pub(super) fn on_draggable_hover(
-    ev: On<PointerEnter>,
+    ev: On<PointerOver>,
     focus_q: Query<(), With<DragFocus>>,
     mut cmd: Commands,
 ) {
     if !focus_q.is_empty() {
         return;
     }
-    if ev.original_event_target() == ev.entity && !focus_q.contains(ev.entity) {
-        cmd.try_insert_to(ev.entity, DragFocus::Hover);
-    }
+    cmd.try_insert_to(ev.entity, DragFocus::Hover);
 }
 
 pub(super) fn on_draggable_blur(
