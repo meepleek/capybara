@@ -12,18 +12,36 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), setup);
+    app.add_systems(
+        Update,
+        tick_cauldron_timer.run_if(in_state(Screen::Gameplay)),
+    );
     app.add_observer(on_ingredient_drop);
 }
 
-// #[derive(Component, Debug, Clone, FromTemplate)]
-// pub struct Cauldron;
 impl LayoutElementPosition for Cauldron {
     fn position(layout: &GameLayout, _grid: &IngredientGrid) -> Vec2 {
         layout.shaker_position()
     }
 }
 
-relationship_1_to_n!(CauldronIngredient, Cauldron);
+relationship_1_to_n!(IngredientOfCauldron, Cauldron);
+
+#[derive(Component, Deref, DerefMut, Clone, FromTemplate)]
+pub struct CauldronTimer(Timer);
+impl Default for CauldronTimer {
+    fn default() -> Self {
+        Self(Timer::new(sec(5.), TimerMode::Once))
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Clone, FromTemplate)]
+pub struct CauldronIngredient(pub Ingredient);
+
+#[derive(Event)]
+pub struct DrinkReady {
+    pub ingredients: Vec<Ingredient>,
+}
 
 fn setup(mut cmd: Commands, layout: GameLayout) {
     cmd.spawn_scene(shaker_scene(layout.shaker_position()));
@@ -53,6 +71,7 @@ fn on_ingredient_drop(
     layout: GameLayout,
     mut cmd: Commands,
     cauldron_q: Query<&Cauldron>,
+    mut timer_q: Query<&mut CauldronTimer>,
 ) {
     let idx = cauldron_q.get(ev.target_entity).map_or(0, |c| c.0.len()) as u8;
     let position = layout.cauldron_ingredient_position(idx);
@@ -63,7 +82,50 @@ fn on_ingredient_drop(
     cmd.spawn_scene(bsn! {
         #cauldron_ingredient
         ChildOf({ev.target_entity})
-        CauldronIngredient({ev.target_entity})
+        IngredientOfCauldron({ev.target_entity})
+        CauldronIngredient({ev.draggable})
         @{icon}
     });
+
+    match timer_q.get_mut(ev.target_entity) {
+        Ok(mut timer) => {
+            // adding an ingredient resets the timer a bit
+            let elapsed = timer.elapsed().saturating_sub(sec(1.));
+            timer.set_elapsed(elapsed);
+        }
+        Err(_) => {
+            cmd.try_insert_to(ev.target_entity, CauldronTimer::default());
+        }
+    };
+    if idx == 0 {}
+}
+
+fn tick_cauldron_timer(
+    mut timer_q: Query<(Entity, &Cauldron, &mut CauldronTimer)>,
+    ingredient_q: Query<&CauldronIngredient>,
+    time: Res<Time>,
+    mut cmd: Commands,
+) {
+    for (e, cauldron, mut timer) in &mut timer_q {
+        timer.tick(time.delta());
+        tracing::warn!(el=?timer.elapsed());
+        if timer.just_finished() {
+            let mut ingredients = Vec::new();
+            for ingredient_e in &cauldron.0 {
+                let ingredient = or_continue!(ingredient_q.get(*ingredient_e)).0;
+                ingredients.push(ingredient);
+                let mut e_cmd = or_continue!(cmd.get_entity(*ingredient_e));
+                e_cmd.try_remove::<CauldronIngredient>();
+                e_cmd.try_remove::<IngredientOfCauldron>();
+                e_cmd.try_insert(
+                    TransformScaleLensSrc::new(Vec2::ZERO)
+                        .duration(ms(160))
+                        .despawn_target_on_completion(),
+                );
+            }
+            tracing::warn!(?ingredients, "drink done");
+            cmd.trigger(DrinkReady { ingredients });
+            cmd.try_remove_from::<CauldronTimer>(e);
+        }
+    }
 }
