@@ -14,7 +14,7 @@ pub(super) fn plugin(app: &mut App) {
 
 pub(crate) const INGREDIENT_MAX: u8 = 6;
 
-#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum Ingredient {
     #[default]
     Honey,

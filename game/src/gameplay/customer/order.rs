@@ -2,7 +2,7 @@ use mplk_ecs::relationship_1_to_n;
 
 use crate::{
     gameplay::{
-        customer::Customer,
+        cauldron::{DrinkReady, OrderlessDrink},
         ingredient::Ingredient,
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
@@ -15,12 +15,13 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         (tick_order_timer, update_order_time).run_if(in_state(Screen::Gameplay)),
     );
-    app.add_observer(spawn_order);
+    app.add_observer(process_finished_drinks)
+        .add_observer(process_finished_orders);
 }
 
 #[derive(Component, Debug, Clone, FromTemplate)]
 pub struct Order {
-    pub ingredients: HashSet<Ingredient>,
+    pub ingredients: Vec<Ingredient>,
     pub timer: Timer,
 }
 impl InventoryPosition for Order {
@@ -39,7 +40,7 @@ pub struct NewOrder {
 }
 
 #[derive(Event)]
-pub struct OrderDone(Entity);
+pub struct OrderFinished(Entity);
 
 #[derive(Event)]
 pub struct OrderMissed(Entity);
@@ -56,7 +57,7 @@ pub(super) fn order_scene(order: &NewOrder, idx: u8, layout: &GameLayout) -> imp
     bsn! {
         #order
         Order {
-            ingredients: {order.ingredients.iter().cloned().collect::<HashSet<_>>()},
+            ingredients: {order.ingredients.clone()},
             timer: Timer::new(order.duration, TimerMode::Once),
         }
         InventoryIndex(idx)
@@ -80,14 +81,34 @@ pub(super) fn order_scene(order: &NewOrder, idx: u8, layout: &GameLayout) -> imp
     }
 }
 
-fn spawn_order(
-    ev: On<NewOrder>,
-    layout: GameLayout,
+fn process_finished_drinks(
+    ev: On<DrinkReady>,
+    order_q: Query<(Entity, &Order)>,
     mut cmd: Commands,
-    customer_q: Query<&InventoryIndex, With<Customer>>,
 ) {
-    let idx = or_return!(customer_q.get(ev.customer_e));
-    cmd.spawn_scene(order_scene(ev.event(), idx.0, &layout));
+    let mut drink_ingredients = ev.ingredients.clone();
+    drink_ingredients.sort_unstable();
+    for (e, order) in &order_q {
+        let mut order_ingredients = order.ingredients.clone();
+        order_ingredients.sort_unstable();
+        if order_ingredients == drink_ingredients {
+            cmd.trigger(OrderFinished(e));
+            return;
+        }
+    }
+    cmd.trigger(OrderlessDrink {
+        ingredients: drink_ingredients,
+    });
+}
+
+fn process_finished_orders(ev: On<OrderFinished>, mut cmd: Commands) {
+    cmd.try_remove_from::<Order>(ev.0);
+    cmd.try_insert_to(
+        ev.0,
+        TransformScaleLensSrc::new(Vec2::ZERO)
+            .duration(ms(160))
+            .despawn_target_on_completion(),
+    );
 }
 
 fn tick_order_timer(mut order_q: Query<(Entity, &mut Order)>, time: Res<Time>, mut cmd: Commands) {
@@ -101,13 +122,12 @@ fn tick_order_timer(mut order_q: Query<(Entity, &mut Order)>, time: Res<Time>, m
 
 #[derive(Component, FromTemplate)]
 struct OrderTimeText;
-
 fn update_order_time(
     mut text_q: Query<(&mut Text2d, &ChildOf), With<OrderTimeText>>,
     order_q: Query<&Order>,
 ) {
     for (mut text, parent) in &mut text_q {
-        let order = or_continue!(order_q.get(parent.0));
+        let order = or_continue_quiet!(order_q.get(parent.0));
         text.0 = format!("{} s", order.timer.remaining_secs().round());
     }
 }

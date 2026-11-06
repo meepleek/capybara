@@ -1,6 +1,9 @@
 use crate::{
     gameplay::{
-        customer::{Customer, order::NewOrder},
+        customer::{
+            Customer,
+            order::{NewOrder, order_scene},
+        },
         ingredient::Ingredient,
         inventory::InventoryIndex,
         layout::GameLayout,
@@ -10,10 +13,7 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), setup);
-    // app.add_systems(
-    //     Update,
-    //     tick_cauldron_timer.run_if(in_state(Screen::Gameplay)),
-    // );
+    app.add_observer(spawn_order);
 }
 
 pub const CUSTOMER_COUNT: u8 = 3;
@@ -32,6 +32,16 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
         duration: sec(60.),
         customer_e,
     });
+}
+
+fn spawn_order(
+    ev: On<NewOrder>,
+    layout: GameLayout,
+    mut cmd: Commands,
+    customer_q: Query<&InventoryIndex, With<Customer>>,
+) {
+    let idx = or_return!(customer_q.get(ev.customer_e));
+    cmd.spawn_scene(order_scene(ev.event(), idx.0, &layout));
 }
 
 fn customer_scene(idx: u8, translation: Vec3) -> impl Scene {

@@ -43,6 +43,11 @@ pub struct DrinkReady {
     pub ingredients: Vec<Ingredient>,
 }
 
+#[derive(Event, Debug)]
+pub struct OrderlessDrink {
+    pub ingredients: Vec<Ingredient>,
+}
+
 fn setup(mut cmd: Commands, layout: GameLayout) {
     cmd.spawn_scene(cauldron_scene(layout.cauldron_position()));
 }
