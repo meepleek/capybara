@@ -2,7 +2,11 @@ use bevy::window::WindowResized;
 
 use crate::{
     gameplay::{
-        drag::IgnoreDrag, ingredient::Ingredient, inventory::InventoryIndex, layout::GameLayout,
+        drag::{DragFocus, DragPosition, IgnoreDrag},
+        ingredient::Ingredient,
+        inventory::InventoryIndex,
+        layout::GameLayout,
+        shaker::Shaker,
     },
     prelude::*,
 };
@@ -16,42 +20,58 @@ pub(super) fn plugin(app: &mut App) {
         )
             .run_if(in_state(Screen::Gameplay)),
     );
+    app.add_observer(on_drop_enter::<Shaker>)
+        .add_observer(on_drop_leave::<Shaker>);
 }
 
-// fn drag_ingredient(
-//     mut piece_q: Query<(&mut Transform, &DragPosition), (With<DragFocus>, With<Ingredient>)>,
-//     time: Res<Time>,
+fn on_drop_enter<TDropTarget: Component>(
+    ev: On<PointerOver>,
+    mut ingredient_q: Query<&mut DragPosition, (With<Ingredient>, With<DragFocus>)>,
+    droppable_q: Query<&GlobalTransform, With<TDropTarget>>,
+) {
+    let drop_t = or_return_quiet!(droppable_q.get(ev.entity));
+    let mut drag = or_return_quiet!(ingredient_q.single_mut());
+    drag.snapped_position = Some(drop_t.translation().truncate());
+}
+
+fn on_drop_leave<TDropTarget: Component>(
+    ev: On<PointerLeave>,
+    mut ingredient_q: Query<&mut DragPosition, (With<Ingredient>, With<DragFocus>)>,
+    droppable_q: Query<(), With<TDropTarget>>,
+) {
+    or_return_quiet!(droppable_q.get(ev.entity));
+    let mut drag = or_return_quiet!(ingredient_q.single_mut());
+    drag.snapped_position = None;
+}
+
+// fn snap_pieces_to_grid(
+//     mut piece_q: Query<(&Piece, &mut DragPosition), With<DragFocus>>,
+//     grid: Single<&IngredientGrid>,
 // ) {
-//     for (mut t, drag) in &mut piece_q {
-//         let target = drag.snapped_position.unwrap_or(drag.drag_position);
-//         t.translation = asymptotic_smoothing_with_delta_time(
-//             t.translation,
-//             target.extend(t.translation.z),
-//             0.4,
-//             time.delta_secs(),
-//         );
+//     for (piece, mut drag) in &mut piece_q {
+//         if let Some(tile) = grid.world_to_tile(drag.drag_position)
+//             && let Ok(_completed_sections) = grid.preview_piece_placement(piece, tile)
+//         {
+//             let tile_pos = or_continue!(grid.tile_to_world(tile));
+//             drag.snapped_position = Some(tile_pos);
+//         } else {
+//             drag.snapped_position = None;
+//         }
 //     }
 // }
 
-// todo: drop handling
-// pub(super) fn on_drop_enter<
-//     TDraggable: Component + InventoryPosition + Clone,
-//     TDropTarget: Component,
-// >(
-//     ev: On<PointerDragEnter>,
-//     mut draggable_q: Query<&mut DragPosition, With<TDraggable>>,
-//     droppable_q: Query<&GlobalTransform, With<TDropTarget>>,
-//     // mut piece_q: Query<
-//     //     (&mut Transform, &Piece, &mut DragPosition, &InventoryIndex),
-//     //     Without<IgnoreDrag>,
-//     // >,
-//     // mut cmd: Commands,
-//     // layout: GameLayout,
+// todo: on shaker drop, piece drop, grid drop, capy drop, customer drop etc.
+// pub(super) fn on_drop(
+//     ev: On<DraggableDrop<Piece, IngredientGrid>>,
+//     mut grid: Single<&mut IngredientGrid>,
+//     mut section_mw: MessageWriter<GridSectionCompletedMsg>,
 // ) {
-//     let mut drag = or_return_quiet!(draggable_q.get_mut(ev.dragged));
-//     let drop_t = or_return_quiet!(droppable_q.get(ev.entity));
-
-//     drag.snapped_position = Some(drop_t.translation().truncate());
+//     let tile = or_return!(grid.world_to_tile_center(ev.position));
+//     let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile));
+//     tracing::warn!(?completed_sections);
+//     for cs in completed_sections {
+//         section_mw.write(GridSectionCompletedMsg(cs));
+//     }
 // }
 
 // todo: need to handle returning ingredients as well

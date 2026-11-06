@@ -31,8 +31,8 @@ fn shaker_scene(position: Vec2) -> impl Scene {
             custom_size: Some(Vec2::splat(256.)),
             ..default()
         })
-        DespawnOnExit<Screen>(Screen::Gameplay)
         Pickable
+        DespawnOnExit<Screen>(Screen::Gameplay)
     }
 }
 
