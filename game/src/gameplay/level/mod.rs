@@ -2,15 +2,23 @@ use crate::{
     gameplay::{
         customer::{CustomerKind, order::OrderMissed},
         ingredient::CommonIngredient,
+        level::tutorial::TutorialLevelData,
         piece::template::PieceTemplate,
-        tutorial::TutorialLevelData,
     },
     prelude::*,
 };
 
+pub mod spawn;
+pub mod tutorial;
+
 pub(super) fn plugin(app: &mut App) {
+    app.add_plugins((tutorial::plugin, spawn::plugin));
     app.add_observer(processed_missed_order);
+    app.insert_resource(LevelIndex(0));
 }
+
+#[derive(Resource)]
+pub struct LevelIndex(pub u8);
 
 pub enum LevelKind {
     Tutorial(TutorialLevelData),
