@@ -3,7 +3,7 @@ use bevy::{ecs::system::SystemParam, window::WindowResized};
 use crate::{
     gameplay::{
         cauldron::Cauldron,
-        drag::IgnoreDrag,
+        drag::{DragPosition, IgnoreDrag},
         grid::{GridSection, IngredientGrid},
         ingredient::Ingredient,
         inventory::InventoryIndex,
@@ -121,15 +121,16 @@ impl GameLayout<'_, '_> {
 fn move_inventory_on_resize<TInventoryItem: Component + InventoryPosition>(
     mut resize_mr: MessageReader<WindowResized>,
     mut ingredient_q: Query<
-        (&mut Transform, &InventoryIndex),
+        (&mut Transform, &mut DragPosition, &InventoryIndex),
         (With<TInventoryItem>, Without<IgnoreDrag>),
     >,
     layout: GameLayout,
 ) {
     if resize_mr.clear_any() {
-        for (mut t, idx) in &mut ingredient_q {
+        for (mut t, mut drag, idx) in &mut ingredient_q {
             t.translation =
                 TInventoryItem::inventory_position(&layout, idx).extend(t.translation.z);
+            drag.drag_position = t.translation.truncate();
         }
     }
 }
