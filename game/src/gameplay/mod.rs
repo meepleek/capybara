@@ -18,5 +18,6 @@ pub(super) fn plugin(app: &mut App) {
         piece::plugin,
         drag::plugin,
         shaker::plugin,
+        layout::plugin,
     ));
 }

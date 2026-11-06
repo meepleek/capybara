@@ -1,12 +1,26 @@
-use bevy::ecs::system::SystemParam;
+use bevy::{ecs::system::SystemParam, window::WindowResized};
 
 use crate::{
     gameplay::{
+        drag::IgnoreDrag,
         grid::{GridSection, IngredientGrid},
+        ingredient::Ingredient,
         inventory::InventoryIndex,
+        piece::Piece,
     },
     prelude::*,
 };
+
+pub(super) fn plugin(app: &mut App) {
+    app.add_systems(
+        Update,
+        (
+            move_inventory_on_resize::<Ingredient>,
+            move_inventory_on_resize::<Piece>,
+        )
+            .run_if(in_state(Screen::Gameplay)),
+    );
+}
 
 pub trait InventoryPosition {
     fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2;
@@ -89,5 +103,22 @@ impl GameLayout<'_, '_> {
 
     fn window_half_size(&self) -> Vec2 {
         self.window.size() / 2.
+    }
+}
+
+// todo: need to handle returning inventory items as well
+fn move_inventory_on_resize<TInventoryItem: Component + InventoryPosition>(
+    mut resize_mr: MessageReader<WindowResized>,
+    mut ingredient_q: Query<
+        (&mut Transform, &InventoryIndex),
+        (With<TInventoryItem>, Without<IgnoreDrag>),
+    >,
+    layout: GameLayout,
+) {
+    if resize_mr.clear_any() {
+        for (mut t, idx) in &mut ingredient_q {
+            t.translation =
+                TInventoryItem::inventory_position(&layout, idx).extend(t.translation.z);
+        }
     }
 }

@@ -1,25 +1,13 @@
-use bevy::window::WindowResized;
-
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, IgnoreDrag},
+        drag::{DragFocus, DragPosition},
         ingredient::Ingredient,
-        inventory::InventoryIndex,
-        layout::GameLayout,
         shaker::Shaker,
     },
     prelude::*,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        (
-            move_ingredients_on_resize,
-            //     drag_ingredient
-        )
-            .run_if(in_state(Screen::Gameplay)),
-    );
     app.add_observer(on_drop_enter::<Shaker>)
         .add_observer(on_drop_leave::<Shaker>);
 }
@@ -73,19 +61,3 @@ fn on_drop_leave<TDropTarget: Component>(
 //         section_mw.write(GridSectionCompletedMsg(cs));
 //     }
 // }
-
-// todo: need to handle returning ingredients as well
-fn move_ingredients_on_resize(
-    mut resize_mr: MessageReader<WindowResized>,
-    mut ingredient_q: Query<
-        (&mut Transform, &InventoryIndex),
-        (With<Ingredient>, Without<IgnoreDrag>),
-    >,
-    layout: GameLayout,
-) {
-    if resize_mr.clear_any() {
-        for (mut t, idx) in &mut ingredient_q {
-            t.translation = layout.ingredient_position(idx.0).extend(t.translation.z);
-        }
-    }
-}

@@ -1,11 +1,7 @@
-use bevy::window::WindowResized;
-
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, DraggableDrop, IgnoreDrag},
+        drag::{DragFocus, DragPosition, DraggableDrop},
         grid::{GridSectionCompletedMsg, IngredientGrid},
-        inventory::InventoryIndex,
-        layout::GameLayout,
         piece::Piece,
     },
     prelude::*,
@@ -14,7 +10,7 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (snap_pieces_to_grid, move_pieces_on_resize).run_if(in_state(Screen::Gameplay)),
+        snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
     );
 }
 
@@ -28,24 +24,6 @@ pub(super) fn on_drop(
     tracing::warn!(?completed_sections);
     for cs in completed_sections {
         section_mw.write(GridSectionCompletedMsg(cs));
-    }
-}
-
-// todo: need to handle returning ingredients as well
-fn move_pieces_on_resize(
-    mut resize_mr: MessageReader<WindowResized>,
-    mut ingredient_q: Query<
-        (&mut Transform, &mut DragPosition, &InventoryIndex),
-        (With<Piece>, Without<IgnoreDrag>),
-    >,
-    layout: GameLayout,
-) {
-    if resize_mr.clear_any() {
-        for (mut t, mut drag, idx) in &mut ingredient_q {
-            let position = layout.piece_position(idx.0);
-            t.translation = position.extend(t.translation.z);
-            drag.drag_position = position;
-        }
     }
 }
 
