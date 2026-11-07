@@ -45,7 +45,8 @@ pub fn popup(text: impl Into<String>) -> impl Scene {
                 --
                 #continue_btn
                 @button("Continue")
-                TextPopupContinuBtnCooldown(Timer::from_seconds(1., TimerMode::Once))
+                TextPopupContinuBtnCooldown(Timer::from_seconds(0.1, TimerMode::Once))
+                // TextPopupContinuBtnCooldown(Timer::from_seconds(1., TimerMode::Once))
                 InteractionDisabled
                 on(handle_continue)
             ]

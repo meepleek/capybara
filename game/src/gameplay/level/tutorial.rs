@@ -5,9 +5,12 @@ use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
 use crate::{
     gameplay::{
-        customer::{Customer, order::NewOrder},
+        customer::{
+            Customer,
+            order::{NewOrder, OrderFinished},
+        },
         grid::INGREDIENT_TILE_SIZE,
-        ingredient::{self, CommonIngredient, Ingredient},
+        ingredient::{self, AddIngredient, CommonIngredient, Ingredient},
         level::{LevelFinished, Tool},
         piece::{AddPiece, template::PieceTemplate},
         ui::text_popup::{TextPopupClosed, popup},
@@ -19,7 +22,9 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(ensure_single_at_most::<TutorialState>)
         .add_observer(start_tutorial)
         .add_observer(next_step)
-        .add_observer(process_step);
+        .add_observer(process_step)
+        .add_observer(wait_for_ingredient)
+        .add_observer(wait_for_finished_order);
 }
 
 #[derive(Debug, Clone)]
@@ -35,14 +40,14 @@ impl TutorialLevelData {
         use TutorialStep::*;
 
         let grid = r"
-.####.###
+..###.##.
 #.##..###
-.####.###
-#.#######
+#.###.###
+#.#.####.
 .########
-#.#######
+##...####
 .########
-#.#.#.#.#
+###.#.#.#
 .#.#.#.#.
 ";
         TutorialLevelData {
@@ -54,23 +59,25 @@ impl TutorialLevelData {
                 TutorialStep::text(
                     "Welcome, dear capybarista.\nLet's take a stab at making your first drink.",
                 ),
-                Order(vec![Common(Orange)]),
+                Order(vec![Common(Apple)]),
                 TutorialStep::text(
                     "Oh look, our first order has come in. Let's get cracking then.",
                 ),
                 TutorialStep::text("On your left is the ingredient board."),
-                TutorialStep::piece(T),
+                TutorialStep::rotated_piece(T, 1),
                 TutorialStep::text(
                     "Drag pieces to fill in rows, columns and rows to synthentize whatever is shown in or next to those areas.",
                 ),
-                WaitForIngredient(Common(Orange)),
+                WaitForIngredient(Common(Apple)),
                 TutorialStep::text(
                     "Now you can grab those ingredients and drag them to the cauldron to fulfill the order.",
                 ),
                 WaitForFinishedOrder,
                 TutorialStep::text("Nicely done!\nNow try one more order."),
                 Order(vec![Common(Apple), Common(Orange)]),
-                TutorialStep::text("Nicely done!\nNow try one more order."),
+                TutorialStep::text("This one needs multiple ingredients."),
+                TutorialStep::piece(Line4),
+                TutorialStep::rotated_piece(Line4, 1),
                 WaitForFinishedOrder,
                 TutorialStep::text("Good work!\nSee you soon for your first full shift."),
             ],
@@ -195,7 +202,6 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
             cmd.trigger(ingredient::AddIngredient(*ingredient));
             Some(sec(1.))
         }
-        TutorialStep::WaitForIngredient(ingredient) => todo!(),
         TutorialStep::Order(ingredients) => {
             or_return!(cmd.get_entity(ev.entity)).observe(add_new_order);
             cmd.trigger(TutorialNewOrder {
@@ -204,7 +210,7 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
             });
             None
         }
-        TutorialStep::WaitForFinishedOrder => todo!(),
+        TutorialStep::WaitForIngredient(_) | TutorialStep::WaitForFinishedOrder => None,
         TutorialStep::ShowTool(tool) => todo!(),
     };
     if let Some(delay) = next_step_delay {
@@ -229,4 +235,20 @@ fn add_new_order(
 
 fn handle_text_popup_closed(_ev: On<TextPopupClosed>, mut cmd: Commands) {
     cmd.delayed().secs(0.5).trigger(NextTutorialStep);
+}
+
+fn wait_for_ingredient(ev: On<AddIngredient>, step: Single<&TutorialStep>, mut cmd: Commands) {
+    let TutorialStep::WaitForIngredient(ingredient) = *step else {
+        return;
+    };
+    if ev.0 == *ingredient {
+        cmd.delayed().secs(1.).trigger(NextTutorialStep);
+    }
+}
+
+fn wait_for_finished_order(_ev: On<OrderFinished>, step: Single<&TutorialStep>, mut cmd: Commands) {
+    let TutorialStep::WaitForFinishedOrder = *step else {
+        return;
+    };
+    cmd.delayed().secs(1.).trigger(NextTutorialStep);
 }

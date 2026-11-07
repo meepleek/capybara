@@ -20,7 +20,7 @@ pub(super) fn on_drop(
 ) {
     let tile = or_return!(grid.world_to_tile_center(ev.position));
     let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile));
-    tracing::warn!(?completed_sections);
+    tracing::info!(?completed_sections);
     for cs in completed_sections {
         section_mw.write(GridSectionCompletedMsg(cs));
     }

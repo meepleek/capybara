@@ -125,7 +125,7 @@ fn tick_cauldron_timer(
                         .despawn_target_on_completion(),
                 );
             }
-            tracing::warn!(?ingredients, "drink done");
+            tracing::info!(?ingredients, "drink done");
             cmd.trigger(DrinkReady { ingredients });
             cmd.try_remove_from::<CauldronTimer>(e);
         }
