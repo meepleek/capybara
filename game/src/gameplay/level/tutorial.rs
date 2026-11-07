@@ -301,7 +301,7 @@ fn wait_for_finished_order(_ev: On<OrderFinished>, step: Single<&TutorialStep>, 
 }
 
 fn wait_for_used_ability(ev: On<AbilityUsed>, step: Single<&TutorialStep>, mut cmd: Commands) {
-    let TutorialStep::WaitForIngredient(ingredient) = *step else {
+    let TutorialStep::WaitForIngredientAbility(ingredient) = *step else {
         return;
     };
     if ev.0 == *ingredient {

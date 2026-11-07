@@ -27,10 +27,20 @@ pub struct AddPiece {
     pub idx: Option<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum PieceRotation {
     CW(u8),
     CCW(u8),
+}
+impl PieceRotation {
+    pub fn to_rot2d(self) -> Rot2 {
+        Rot2::degrees(
+            match self {
+                PieceRotation::CW(rotations) => -(rotations as f32),
+                PieceRotation::CCW(rotations) => rotations as f32,
+            } * 90.,
+        )
+    }
 }
 
 #[derive(EntityEvent, Debug)]

@@ -34,3 +34,23 @@ fn on_piece_drop(ev: On<DraggableDrop<Ingredient, Piece>>, mut cmd: Commands) {
     });
     cmd.trigger(AbilityUsed(ev.draggable));
 }
+
+pub fn rotate_piece(ev: On<RotatePiece>, mut piece_q: Query<&mut Piece>, mut cmd: Commands) {
+    let mut piece = or_return!(piece_q.get_mut(ev.entity));
+    match ev.rotation {
+        PieceRotation::CW(rotations) => {
+            for _ in 0..rotations {
+                piece.rotate_cw();
+            }
+        }
+        PieceRotation::CCW(rotations) => {
+            for _ in 0..rotations {
+                piece.rotate_ccw();
+            }
+        }
+    }
+    cmd.try_insert_to(
+        ev.entity,
+        TransformRotationDegreesLensSrc::new(ev.rotation.to_rot2d().as_degrees()).duration(ms(300)),
+    );
+}

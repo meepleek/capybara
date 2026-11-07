@@ -7,7 +7,7 @@ use crate::{
         grid::{INGREDIENT_TILE_SIZE_F32, IngredientGrid},
         inventory::InventoryIndex,
         layout::GameLayout,
-        piece::{AddPiece, Piece},
+        piece::{AddPiece, Piece, ability::rotate_piece},
     },
     prelude::*,
 };
@@ -81,6 +81,7 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         on(gameplay::drag::on_draggable_drag)
         on(gameplay::drag::on_draggable_drag_end_restore_position::<Piece>)
         on(gameplay::drag::on_draggable_drag_end_snapped::<Piece, IngredientGrid>)
+        on(rotate_piece)
         Children[
             #piece_sprites
             Visibility
