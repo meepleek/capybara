@@ -1,6 +1,5 @@
 use std::collections::VecDeque;
 
-use bevy::ui_widgets::Activate;
 use mplk_ecs::observer::ensure_single_at_most;
 use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
@@ -9,9 +8,8 @@ use crate::{
         customer::{Customer, order::NewOrder},
         grid::INGREDIENT_TILE_SIZE,
         ingredient::{self, CommonIngredient, Ingredient},
-        inventory::InventoryIndex,
         level::{LevelFinished, Tool},
-        piece::template::PieceTemplate,
+        piece::{AddPiece, template::PieceTemplate},
         ui::text_popup::{TextPopupClosed, popup},
     },
     prelude::*,
@@ -174,9 +172,6 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
     let step = or_return!(step_q.get(ev.entity));
     let next_step_delay = match step {
         TutorialStep::Text(text) => {
-            let btn_handler = bsn! {
-                    on(|_ev: On<Activate>| { tracing::warn!("continue pls"); })
-            };
             cmd.spawn_scene(bsn! {
                 #tutorial_text
                 @{popup(text)}
@@ -188,7 +183,14 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
         TutorialStep::AddPiece {
             template,
             cw_rotations,
-        } => todo!(),
+        } => {
+            cmd.trigger(AddPiece {
+                piece: *template,
+                cw_rotations: *cw_rotations,
+                idx: None,
+            });
+            Some(sec(1.))
+        }
         TutorialStep::AddIngredient(ingredient) => {
             cmd.trigger(ingredient::AddIngredient(*ingredient));
             Some(sec(1.))
@@ -215,6 +217,7 @@ fn add_new_order(
     mut cmd: Commands,
     customer_q: Query<Entity, With<Customer>>,
 ) {
+    // todo: pick first customer?
     let customer_e = or_return!(customer_q.iter().next());
     cmd.trigger(NewOrder {
         ingredients: ev.ingredients.clone(),

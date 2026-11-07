@@ -1,7 +1,4 @@
-use bevy::{
-    ecs::system::IntoObserverSystem, scene::OnTemplate, ui::InteractionDisabled,
-    ui_widgets::Activate,
-};
+use bevy::{ui::InteractionDisabled, ui_widgets::Activate};
 
 use crate::{gameplay::ui::button, prelude::*};
 

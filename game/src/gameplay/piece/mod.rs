@@ -6,6 +6,7 @@ use crate::{
     gameplay::{
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
+        piece::template::PieceTemplate,
     },
     prelude::*,
 };
@@ -15,6 +16,13 @@ pub(super) fn plugin(app: &mut App) {
 }
 
 pub(crate) const INVENTORY_MAX: u8 = 3;
+
+#[derive(Event)]
+pub struct AddPiece {
+    pub piece: PieceTemplate,
+    pub cw_rotations: u8,
+    pub idx: Option<u8>,
+}
 
 #[derive(Debug, Clone, Component)]
 pub struct Piece {

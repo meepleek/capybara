@@ -6,12 +6,15 @@ use crate::{
         drag::DragPosition,
         grid::{INGREDIENT_TILE_SIZE_F32, IngredientGrid},
         inventory::InventoryIndex,
-        piece::Piece,
+        layout::GameLayout,
+        piece::{AddPiece, Piece},
     },
     prelude::*,
 };
 
-pub(super) fn plugin(_app: &mut App) {}
+pub(super) fn plugin(app: &mut App) {
+    app.add_observer(add_piece);
+}
 
 pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl Scene {
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
@@ -85,4 +88,22 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
             Children [{tiles}]
         ]
     }
+}
+
+fn add_piece(
+    ev: On<AddPiece>,
+    mut cmd: Commands,
+    layout: GameLayout,
+    piece_q: Query<(), With<Piece>>,
+) {
+    let mut p = ev.piece.piece();
+    for _ in 0..ev.cw_rotations {
+        p.rotate_cw();
+    }
+    let idx = ev.idx.unwrap_or_else(|| piece_q.count() as u8);
+    let position = layout.piece_position(idx);
+    cmd.spawn_scene(bsn! {
+        @piece_scene(p, position, idx)
+        InventoryIndex(idx)
+    });
 }
