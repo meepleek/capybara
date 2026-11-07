@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 
+use bevy::ui_widgets::Activate;
 use mplk_ecs::observer::ensure_single_at_most;
 use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
@@ -10,6 +11,10 @@ use crate::{
         ingredient::{self, CommonIngredient, Ingredient},
         level::{LevelFinished, Tool},
         piece::template::PieceTemplate,
+        ui::{
+            text_popup::{TextPopupClosed, popup},
+            ui_root,
+        },
     },
     prelude::*,
 };
@@ -165,7 +170,16 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
     let step = or_return!(step_q.get(ev.entity));
     let next_step_delay = match step {
         TutorialStep::Text(text) => {
-            todo!()
+            let btn_handler = bsn! {
+                    on(|_ev: On<Activate>| { tracing::warn!("continue pls"); })
+            };
+            cmd.spawn_scene(bsn! {
+                #tutorial_text
+                @{popup(text)}
+                DespawnOnExit<Screen>(Screen::Gameplay)
+            })
+            .observe(handle_text_popup_closed);
+            None
         }
         TutorialStep::AddPiece {
             template,
@@ -189,4 +203,8 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
     if let Some(delay) = next_step_delay {
         cmd.delayed().duration(delay).trigger(NextTutorialStep);
     }
+}
+
+fn handle_text_popup_closed(_ev: On<TextPopupClosed>, mut cmd: Commands) {
+    cmd.delayed().secs(0.5).trigger(NextTutorialStep);
 }

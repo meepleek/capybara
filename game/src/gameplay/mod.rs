@@ -12,6 +12,7 @@ pub mod layout;
 pub mod level;
 pub mod piece;
 pub mod turn;
+pub mod ui;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((
@@ -25,5 +26,6 @@ pub(super) fn plugin(app: &mut App) {
         layout::plugin,
         customer::plugin,
         level::plugin,
+        ui::plugin,
     ));
 }
