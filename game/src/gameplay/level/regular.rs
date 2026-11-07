@@ -1,21 +1,25 @@
+use mplk_ecs::observer::ensure_single_at_most;
+
 use crate::{
     gameplay::{
         customer::{
             CustomerKind,
             order::{OrderFinished, OrderMissed},
         },
-        piece::template::PieceTemplate,
+        piece::{AddPiece, INVENTORY_MAX, Piece, bag::PieceBag, template::PieceTemplate},
     },
     prelude::*,
+    screens::run_conditions::in_game,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(processed_missed_order)
-        .add_observer(processed_finished_order);
-    // app.add_systems(Update, respawn_pieces.run_if(in_game));
+        .add_observer(processed_finished_order)
+        .add_observer(ensure_single_at_most::<LevelData>);
+    app.add_systems(Update, spawn_pieces.run_if(in_game));
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
 pub struct LevelData {
     pub piece_bag: Vec<PieceTemplate>,
     pub piece_bag_random_count: u8,
@@ -43,21 +47,17 @@ fn processed_missed_order(_ev: On<OrderMissed>, mut next: ResMut<NextState<Scree
     next.set(Screen::GameOver);
 }
 
-// fn respawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, layout: GameLayout) {
-//     use PieceTemplate::*;
-
-//     let mut rng = rng();
-//     if piece_q.is_empty() {
-//         let lvl_pieces = [Line2, Line3, Line4, T, Square, Corner, L, LFlip, Z, ZFlip];
-//         for i in 0..INVENTORY_MAX {
-//             let template = lvl_pieces
-//                 .choose(&mut rng)
-//                 .expect("No valid piece template");
-//             let mut p = template.piece();
-//             for _ in 0..(rng.random_range(0..=3)) {
-//                 p.rotate_cw();
-//             }
-//             // todo: use AddPiece event
-//         }
-//     }
-// }
+fn spawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, mut piece_bag: Single<&mut PieceBag>) {
+    let mut rng = rng();
+    if piece_q.is_empty() {
+        for i in 0..INVENTORY_MAX {
+            let piece = piece_bag.choose(&mut rng);
+            let cw_rotations = rng.random_range(0..=3);
+            cmd.trigger(AddPiece {
+                piece,
+                cw_rotations,
+                idx: Some(i),
+            });
+        }
+    }
+}

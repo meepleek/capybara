@@ -9,6 +9,7 @@ use crate::{
             regular::LevelData,
             tutorial::{TutorialLevelData, TutorialState},
         },
+        piece::bag::PieceBag,
     },
     prelude::*,
     screens::GameplayLevel,
@@ -142,6 +143,10 @@ fn setup_level(
         }
         LevelKind::Regular(level_data) => {
             next_level_type.set(GameplayLevel::Regular);
+            cmd.spawn_scene(bsn! {
+                #piece_bag
+                PieceBag::new(level_data.piece_bag.clone(), level_data.piece_bag_random_count)
+            });
             // grid
             cmd.spawn_scene(grid_scene(&layout, None, lvl_idx));
             // customers

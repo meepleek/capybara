@@ -1,7 +1,3 @@
-mod drag;
-pub(crate) mod spawn;
-pub(crate) mod template;
-
 use crate::{
     gameplay::{
         inventory::InventoryIndex,
@@ -11,8 +7,13 @@ use crate::{
     prelude::*,
 };
 
+pub mod bag;
+mod drag;
+pub(crate) mod spawn;
+pub(crate) mod template;
+
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((spawn::plugin, drag::plugin));
+    app.add_plugins((spawn::plugin, drag::plugin, bag::plugin));
 }
 
 pub(crate) const INVENTORY_MAX: u8 = 3;

@@ -109,7 +109,7 @@ impl GameLayout<'_, '_> {
             window_half.x // right edge
                 - 90. // extra margin
                 - Self::PADDING,
-            window_half.y - 180. - 280. * idx as f32 - Self::PADDING,
+            window_half.y - 260. - 280. * idx as f32 - Self::PADDING,
         )
     }
 
