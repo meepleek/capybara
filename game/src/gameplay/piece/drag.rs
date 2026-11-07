@@ -5,13 +5,11 @@ use crate::{
         piece::Piece,
     },
     prelude::*,
+    screens::run_conditions::in_game,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(
-        Update,
-        snap_pieces_to_grid.run_if(in_state(Screen::Gameplay)),
-    );
+    app.add_systems(Update, snap_pieces_to_grid.run_if(in_game));
     app.add_observer(on_drop);
 }
 

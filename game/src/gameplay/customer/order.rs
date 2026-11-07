@@ -8,12 +8,13 @@ use crate::{
         layout::{GameLayout, InventoryPosition},
     },
     prelude::*,
+    screens::run_conditions::in_game,
 };
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
-        (tick_order_timer, update_order_time).run_if(in_state(Screen::Gameplay)),
+        (tick_order_timer, update_order_time).run_if(in_game),
     );
     app.add_observer(process_finished_drinks)
         .add_observer(process_finished_order)

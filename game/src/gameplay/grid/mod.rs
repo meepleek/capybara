@@ -4,6 +4,7 @@ use crate::{
         piece::Piece,
     },
     prelude::*,
+    screens::run_conditions::in_game,
 };
 
 use mplk_ecs::transform::TrackPosition;
@@ -22,10 +23,7 @@ pub fn plugin(app: &mut App) {
     app.add_plugins(spawn::plugin);
     app.add_message::<GridSectionCompletedMsg>();
     app.add_systems(Update, IngredientGrid::track_position);
-    app.add_systems(
-        Update,
-        clear_grid_section.run_if(in_state(Screen::Gameplay)),
-    );
+    app.add_systems(Update, clear_grid_section.run_if(in_game));
 }
 
 pub(crate) const INGREDIENT_GRID_SIZE: u16 = 9;

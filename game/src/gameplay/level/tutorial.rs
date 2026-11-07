@@ -25,40 +25,47 @@ impl TutorialLevelData {
         use TutorialStep::*;
 
         let grid = r"
-##.#.#.##
+.####.###
+#.##..###
+.####.###
+#.#######
+.########
+#.#######
+.########
 #.#.#.#.#
-##.#.#.##
-#.#.#.#.#
-##.#.#.##
-#.#.#.#.#
-##.#.#.##
-#.#.#.#.#
-##.#.#.##
+.#.#.#.#.
 ";
         TutorialLevelData {
             initial_board: TutorialBoardState {
                 grid: Self::parse_grid(grid),
-                pieces: vec![vec![T]],
-                piece_bag: vec![Line3],
                 tools: vec![],
             },
             steps: vec![
                 TutorialStep::text(
                     "Welcome, dear capybarista.\nLet's take a stab at making your first drink.",
                 ),
-                Order(vec![Common(Apple), Common(Orange)]),
+                Order(vec![Common(Orange)]),
                 TutorialStep::text(
                     "Oh look, our first order has come in. Let's get cracking then.",
                 ),
+                TutorialStep::text("On your left is the ingredient board."),
+                AddPiece {
+                    template: T,
+                    cw_rotations: 0,
+                },
                 TutorialStep::text(
-                    "On your left is the ingredient board.\nDrag pieces to fill in rows, columns and rows to synthentize whatever is shown in or next to those areas.",
+                    "Drag pieces to fill in rows, columns and rows to synthentize whatever is shown in or next to those areas.",
                 ),
-                WaitForIngredient(Common(Apple)),
+                WaitForIngredient(Common(Orange)),
                 TutorialStep::text(
                     "Now you can grab those ingredients and drag them to the cauldron to fulfill the order.",
                 ),
                 WaitForFinishedOrder,
-                TutorialStep::text("Nicely done.\nSee you soon for your first full shift."),
+                TutorialStep::text("Nicely done!\nNow try one more order."),
+                Order(vec![Common(Apple), Common(Orange)]),
+                TutorialStep::text("Nicely done!\nNow try one more order."),
+                WaitForFinishedOrder,
+                TutorialStep::text("Good work!\nSee you soon for your first full shift."),
             ],
         }
     }
@@ -84,6 +91,10 @@ impl TutorialLevelData {
 #[derive(Debug, Clone)]
 pub enum TutorialStep {
     Text(String),
+    AddPiece {
+        template: PieceTemplate,
+        cw_rotations: u8,
+    },
     AddIngredient(CommonIngredient),
     WaitForIngredient(Ingredient),
     Order(Vec<Ingredient>),
@@ -100,8 +111,5 @@ impl TutorialStep {
 pub struct TutorialBoardState {
     // todo: make this a bitgrid?
     pub grid: BitGrid,
-    // unlike regular lvls allows dealing out less pieces
-    pub pieces: Vec<Vec<PieceTemplate>>,
-    pub piece_bag: Vec<PieceTemplate>,
     pub tools: Vec<Tool>,
 }

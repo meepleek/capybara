@@ -11,6 +11,7 @@ use crate::{
         piece::Piece,
     },
     prelude::*,
+    screens::run_conditions::in_game,
 };
 
 pub(super) fn plugin(app: &mut App) {
@@ -24,7 +25,7 @@ pub(super) fn plugin(app: &mut App) {
             move_element_on_resize::<IngredientGrid>,
             move_element_on_resize::<Cauldron>,
         )
-            .run_if(in_state(Screen::Gameplay)),
+            .run_if(in_game),
     );
 }
 

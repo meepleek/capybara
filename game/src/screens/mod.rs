@@ -1,18 +1,16 @@
-//! The game's main screen states and transitions between them.
+use bevy::prelude::*;
 
 mod game_over;
 mod gameplay;
+pub mod run_conditions;
 mod splash;
 
-use bevy::prelude::*;
-
 pub(super) fn plugin(app: &mut App) {
-    app.init_state::<Screen>();
+    app.init_state::<Screen>().add_sub_state::<GameplayLevel>();
 
     app.add_plugins((gameplay::plugin, splash::plugin, game_over::plugin));
 }
 
-/// The game's main screen states.
 #[derive(clap::ValueEnum, States, Copy, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub enum Screen {
     #[default]
@@ -23,12 +21,10 @@ pub enum Screen {
     GameOver,
 }
 
-// pub fn is_in_game<TState: States>(state: TState) -> impl FnMut(Res<State<Screen>>) -> bool + Clone {
-//     move |state| match state {
-//         Some(fade_state) => match fade_state.get() {
-//             FadeState::FadingIn(to_state) => *to_state == state,
-//             _ => false,
-//         },
-//         None => false,
-//     }
-// }
+#[derive(SubStates, Clone, PartialEq, Eq, Hash, Debug, Default)]
+#[source(Screen = Screen::Gameplay)]
+enum GameplayLevel {
+    #[default]
+    Regular,
+    Tutorial,
+}

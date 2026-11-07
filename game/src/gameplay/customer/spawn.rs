@@ -4,7 +4,6 @@ use crate::{
             Customer,
             order::{NewOrder, order_scene},
         },
-        ingredient::CommonIngredient,
         inventory::InventoryIndex,
         layout::GameLayout,
     },
@@ -13,28 +12,19 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(OnEnter(Screen::Gameplay), setup);
-    app.add_observer(spawn_order);
+    app.add_observer(process_new_order);
 }
 
 pub const CUSTOMER_COUNT: u8 = 3;
 
 fn setup(mut cmd: Commands, layout: GameLayout) {
-    use CommonIngredient::*;
-
-    let mut customer_e = Entity::PLACEHOLDER;
     for i in 0..CUSTOMER_COUNT {
         let pos = layout.customer_position(i);
-        customer_e = cmd.spawn_scene(customer_scene(i, pos.extend(1.))).id();
+        cmd.spawn_scene(customer_scene(i, pos.extend(1.)));
     }
-
-    cmd.trigger(NewOrder {
-        ingredients: vec![Apple, Water],
-        duration: sec(60.),
-        customer_e,
-    });
 }
 
-fn spawn_order(
+fn process_new_order(
     ev: On<NewOrder>,
     layout: GameLayout,
     mut cmd: Commands,

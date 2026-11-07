@@ -4,7 +4,9 @@ use crate::{
             CustomerKind,
             order::{OrderFinished, OrderMissed},
         },
-        piece::template::PieceTemplate,
+        inventory::InventoryIndex,
+        layout::GameLayout,
+        piece::{INVENTORY_MAX, Piece, spawn::piece_scene, template::PieceTemplate},
     },
     prelude::*,
 };
@@ -12,6 +14,7 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(processed_missed_order)
         .add_observer(processed_finished_order);
+    // app.add_systems(Update, respawn_pieces.run_if(in_game));
 }
 
 #[expect(dead_code)]
@@ -31,4 +34,28 @@ fn processed_finished_order(_ev: On<OrderFinished>) {
 
 fn processed_missed_order(_ev: On<OrderMissed>, mut next: ResMut<NextState<Screen>>) {
     next.set(Screen::GameOver);
+}
+
+#[expect(dead_code)]
+fn respawn_pieces(piece_q: Query<&Piece>, mut cmd: Commands, layout: GameLayout) {
+    use PieceTemplate::*;
+
+    let mut rng = rng();
+    if piece_q.is_empty() {
+        let lvl_pieces = [Line2, Line3, Line4, T, Square, Corner, L, LFlip, Z, ZFlip];
+        for i in 0..INVENTORY_MAX {
+            let template = lvl_pieces
+                .choose(&mut rng)
+                .expect("No valid piece template");
+            let mut p = template.piece();
+            for _ in 0..(rng.random_range(0..=3)) {
+                p.rotate_cw();
+            }
+            let position = layout.piece_position(i);
+            cmd.spawn_scene(bsn! {
+                @{piece_scene(p, position, i)}
+                InventoryIndex({i as u8})
+            });
+        }
+    }
 }
