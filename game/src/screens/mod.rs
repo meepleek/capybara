@@ -23,7 +23,7 @@ pub enum Screen {
 
 #[derive(SubStates, Clone, PartialEq, Eq, Hash, Debug, Default)]
 #[source(Screen = Screen::Gameplay)]
-enum GameplayLevel {
+pub enum GameplayLevel {
     #[default]
     Regular,
     Tutorial,

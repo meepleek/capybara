@@ -10,7 +10,7 @@ pub use crate::prelude::*;
 
 pub(super) fn plugin(_app: &mut App) {}
 
-pub fn grid_scene(layout: &GameLayout, grid: Option<BitGrid>) -> impl Scene {
+pub fn grid_scene(layout: &GameLayout, grid: Option<BitGrid>, level_idx: u8) -> impl Scene {
     let grid = grid.unwrap_or_else(|| {
         BitGrid::new(
             (INGREDIENT_GRID_SIZE, INGREDIENT_GRID_SIZE),
@@ -30,7 +30,7 @@ pub fn grid_scene(layout: &GameLayout, grid: Option<BitGrid>) -> impl Scene {
     sections.extend((0..9).map(GridSection::Area));
 
     for section in sections {
-        let ingredient = CommonIngredient::section_ingredient(section);
+        let ingredient = CommonIngredient::section_ingredient(section, level_idx);
         let position = layout.grid_section_position(&grid, section);
         let ingredient_scene = ingredient.icon_scene(position.extend(0.));
         ingredient_icons.push(Box::new(ingredient_scene));

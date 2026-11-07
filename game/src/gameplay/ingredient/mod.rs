@@ -55,19 +55,27 @@ impl CommonIngredient {
         }
     }
 
-    pub fn section_ingredient(section: GridSection) -> CommonIngredient {
+    pub fn section_ingredient(section: GridSection, level_idx: u8) -> CommonIngredient {
         use CommonIngredient::*;
         use GridSection::*;
 
         match section {
             Column(0..=2) | Row(6..=8) | Area(1) => Apple,
             Column(3..=5) | Row(3..=5) => Orange,
-            Column(6..=8) | Row(0..=2) => Honey,
-            Area(0) | Area(8) => Coffee,
+            Column(6..=8) | Row(0..=2) => Honey.replace_if_locked(Water, level_idx),
+            Area(0) | Area(8) => Coffee.replace_if_locked(Orange, level_idx),
             Area(2) | Area(4) | Area(6) => Water,
-            Area(3) | Area(5) => Air,
-            Area(7) => Ginger,
+            Area(3) | Area(5) => Air.replace_if_locked(Apple, level_idx),
+            Area(7) => Ginger.replace_if_locked(Orange, level_idx),
             _ => unreachable!("invalid grid section"),
+        }
+    }
+
+    fn replace_if_locked(self, initial: CommonIngredient, level_idx: u8) -> Self {
+        if level_idx >= self.min_lvl() {
+            self
+        } else {
+            initial
         }
     }
 

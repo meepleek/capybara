@@ -6,6 +6,7 @@ use crate::{
         ingredient::{CommonIngredient, INGREDIENT_MAX},
         inventory::InventoryIndex,
         layout::GameLayout,
+        level::LevelIndex,
     },
     prelude::*,
     screens::run_conditions::in_game,
@@ -20,6 +21,7 @@ fn add_ingredient(
     ingredient_q: Query<(), With<CommonIngredient>>,
     mut cmd: Commands,
     layout: GameLayout,
+    level_idx: Res<LevelIndex>,
 ) {
     let mut idx = ingredient_q.count() as u8;
     for msg in section_mr.read() {
@@ -27,7 +29,7 @@ fn add_ingredient(
             tracing::info!(count = idx, "at max ingredients");
             return;
         }
-        let ingredient = CommonIngredient::section_ingredient(msg.0);
+        let ingredient = CommonIngredient::section_ingredient(msg.0, level_idx.0);
         let position = layout.ingredient_position(idx);
         cmd.spawn_scene(ingredient_scene(ingredient, position, idx));
         idx += 1;

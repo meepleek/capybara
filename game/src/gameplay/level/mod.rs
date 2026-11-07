@@ -83,7 +83,11 @@ fn setup_level(mut cmd: Commands, lvl_idx: Res<LevelIndex>, layout: GameLayout) 
     let level = LevelKind::level(lvl_idx.0);
     match level {
         LevelKind::Tutorial(tutorial) => {
-            cmd.spawn_scene(grid_scene(&layout, Some(tutorial.initial_board.grid)));
+            cmd.spawn_scene(grid_scene(
+                &layout,
+                Some(tutorial.initial_board.grid),
+                lvl_idx.0,
+            ));
         }
         LevelKind::Regular(_level_data) => {}
     }
