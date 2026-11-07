@@ -3,7 +3,7 @@ use mplk_ecs::{observer::readd_default_component, relationship_1_to_n};
 use crate::{
     gameplay::{
         drag::DraggableDrop,
-        ingredient::Ingredient,
+        ingredient::{DroppableIngredientTarget, Ingredient},
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
     },
@@ -24,6 +24,11 @@ impl InventoryPosition for Cauldron {
 }
 
 relationship_1_to_n!(IngredientOfCauldron, Cauldron);
+impl DroppableIngredientTarget for Cauldron {
+    fn droppable(_: Ingredient) -> bool {
+        true
+    }
+}
 
 #[derive(Component, Deref, DerefMut, Clone, FromTemplate)]
 pub struct CauldronTimer(Timer);

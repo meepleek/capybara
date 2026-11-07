@@ -14,6 +14,10 @@ pub(super) fn plugin(app: &mut App) {
 
 pub(crate) const INGREDIENT_MAX: u8 = 6;
 
+pub trait DroppableIngredientTarget {
+    fn droppable(ingredient: Ingredient) -> bool;
+}
+
 #[derive(Event)]
 pub struct AddIngredient(pub Ingredient);
 

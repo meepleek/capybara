@@ -159,25 +159,20 @@ pub(super) fn on_draggable_drag(
     );
 }
 
-pub(super) fn on_draggable_drag_end<
+pub(super) fn on_draggable_drag_end_snapped<
     TDraggable: Component + InventoryPosition + Clone + Debug,
     TDropTarget: Component,
 >(
     ev: On<PointerDragEnd>,
-    mut piece_q: Query<
-        (
-            &mut Transform,
-            &TDraggable,
-            &mut DragPosition,
-            &InventoryIndex,
-        ),
-        Without<IgnoreDrag>,
-    >,
+    mut piece_q: Query<(&mut Transform, &TDraggable, &DragPosition), Without<IgnoreDrag>>,
+    target_q: Query<(), With<TDropTarget>>,
     mut cmd: Commands,
-    layout: GameLayout,
 ) {
-    let (mut t, draggable, mut drag, idx) = or_return!(piece_q.get_mut(ev.entity));
+    let (mut t, draggable, drag) = or_return!(piece_q.get_mut(ev.entity));
     if let Some(snap_data) = drag.snapped_data.as_ref() {
+        if !target_q.contains(snap_data.entity) {
+            return;
+        }
         let mut dragged_e_cmd = or_return!(cmd.get_entity(ev.entity));
         // set position in case it's still easing
         t.translation = snap_data.position.extend(t.translation.z);
@@ -192,7 +187,22 @@ pub(super) fn on_draggable_drag_end<
         target_e_cmd.trigger(|e| {
             DraggableDrop::<TDraggable, TDropTarget>::new(draggable.clone(), e, snap_data.position)
         });
-    } else {
+    }
+}
+
+pub(super) fn on_draggable_drag_end_restore_position<
+    TDraggable: Component + InventoryPosition + Clone + Debug,
+>(
+    ev: On<PointerDragEnd>,
+    mut piece_q: Query<
+        (&mut DragPosition, &InventoryIndex),
+        (Without<IgnoreDrag>, With<TDraggable>),
+    >,
+    mut cmd: Commands,
+    layout: GameLayout,
+) {
+    let (mut drag, idx) = or_return!(piece_q.get_mut(ev.entity));
+    if let None = drag.snapped_data.as_ref() {
         cmd.try_remove_from::<DragFocus>(ev.entity);
         let start_pos = TDraggable::inventory_position(&layout, idx);
         drag.drag_position = start_pos;

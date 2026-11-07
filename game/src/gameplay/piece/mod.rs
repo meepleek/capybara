@@ -1,5 +1,6 @@
 use crate::{
     gameplay::{
+        ingredient::{CommonIngredient, DroppableIngredientTarget, FusedIngredient, Ingredient},
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
         piece::template::PieceTemplate,
@@ -7,13 +8,14 @@ use crate::{
     prelude::*,
 };
 
+pub(crate) mod ability;
 pub mod bag;
 mod drag;
 pub(crate) mod spawn;
 pub(crate) mod template;
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_plugins((spawn::plugin, drag::plugin, bag::plugin));
+    app.add_plugins((spawn::plugin, drag::plugin, bag::plugin, ability::plugin));
 }
 
 pub(crate) const INVENTORY_MAX: u8 = 3;
@@ -23,6 +25,18 @@ pub struct AddPiece {
     pub piece: PieceTemplate,
     pub cw_rotations: u8,
     pub idx: Option<u8>,
+}
+
+#[derive(Debug)]
+pub enum PieceRotation {
+    CW(u8),
+    CCW(u8),
+}
+
+#[derive(EntityEvent, Debug)]
+pub struct RotatePiece {
+    pub entity: Entity,
+    pub rotation: PieceRotation,
 }
 
 #[derive(Debug, Clone, Component)]
@@ -78,6 +92,18 @@ impl Piece {
 impl InventoryPosition for Piece {
     fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2 {
         layout.piece_position(idx.0)
+    }
+}
+impl DroppableIngredientTarget for Piece {
+    fn droppable(ingredient: Ingredient) -> bool {
+        use CommonIngredient::*;
+        use FusedIngredient::*;
+        use Ingredient::*;
+
+        match ingredient {
+            Common(Apple) | Fused(Pineapple) | Common(Orange) | Fused(Lime) => true,
+            _ => false,
+        }
     }
 }
 

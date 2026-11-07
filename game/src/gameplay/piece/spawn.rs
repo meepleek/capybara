@@ -79,7 +79,8 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(gameplay::drag::on_draggable_drag_end::<Piece, IngredientGrid>)
+        on(gameplay::drag::on_draggable_drag_end_restore_position::<Piece>)
+        on(gameplay::drag::on_draggable_drag_end_snapped::<Piece, IngredientGrid>)
         Children[
             #piece_sprites
             Visibility

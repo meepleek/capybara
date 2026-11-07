@@ -7,6 +7,7 @@ use crate::{
         inventory::InventoryIndex,
         layout::GameLayout,
         level::LevelIndex,
+        piece::Piece,
     },
     prelude::*,
     screens::run_conditions::in_game,
@@ -57,7 +58,9 @@ fn ingredient_scene(ingredient: Ingredient, position: Vec2, idx: u8) -> impl Sce
         on(gameplay::drag::on_draggable_blur)
         on(gameplay::drag::on_draggable_press)
         on(gameplay::drag::on_draggable_drag)
-        on(gameplay::drag::on_draggable_drag_end::<Ingredient, Cauldron>)
+        on(gameplay::drag::on_draggable_drag_end_restore_position::<Ingredient>)
+        on(gameplay::drag::on_draggable_drag_end_snapped::<Ingredient, Cauldron>)
+        on(gameplay::drag::on_draggable_drag_end_snapped::<Ingredient, Piece>)
         Children[
             #piece_picking_overlay
             Mesh2d::from_collection(SpriteAssets::piece_picking_mesh)
