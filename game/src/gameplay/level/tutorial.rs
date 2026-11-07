@@ -1,10 +1,11 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, sync::Arc};
 
 use mplk_ecs::observer::ensure_single_at_most;
 use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
 use crate::{
     gameplay::{
+        cauldron::OrderlessDrink,
         customer::{
             Customer,
             order::{NewOrder, OrderFinished},
@@ -24,7 +25,8 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(next_step)
         .add_observer(process_step)
         .add_observer(wait_for_ingredient)
-        .add_observer(wait_for_finished_order);
+        .add_observer(wait_for_finished_order)
+        .add_observer(handle_orderless_drink);
 }
 
 #[derive(Debug, Clone)]
@@ -72,13 +74,13 @@ impl TutorialLevelData {
                 TutorialStep::text(
                     "Now you can grab those ingredients and drag them to the cauldron to fulfill the order.",
                 ),
-                WaitForFinishedOrder,
+                WaitForFinishedOrder(vec![Common(Apple)]),
                 TutorialStep::text("Nicely done!\nNow try one more order."),
                 Order(vec![Common(Apple), Common(Orange)]),
                 TutorialStep::text("This one needs multiple ingredients."),
                 TutorialStep::piece(Line4),
                 TutorialStep::rotated_piece(Line4, 1),
-                WaitForFinishedOrder,
+                WaitForFinishedOrder(vec![Common(Apple), Common(Orange)]),
                 TutorialStep::text("Good work!\nSee you soon for your first full shift."),
             ],
         }
@@ -112,7 +114,7 @@ pub enum TutorialStep {
     AddIngredient(Ingredient),
     WaitForIngredient(Ingredient),
     Order(Vec<Ingredient>),
-    WaitForFinishedOrder,
+    WaitForFinishedOrder(Vec<Ingredient>),
     ShowTool(Tool),
 }
 impl TutorialStep {
@@ -210,7 +212,7 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
             });
             None
         }
-        TutorialStep::WaitForIngredient(_) | TutorialStep::WaitForFinishedOrder => None,
+        TutorialStep::WaitForIngredient(_) | TutorialStep::WaitForFinishedOrder(_) => None,
         TutorialStep::ShowTool(tool) => todo!(),
     };
     if let Some(delay) = next_step_delay {
@@ -247,8 +249,38 @@ fn wait_for_ingredient(ev: On<AddIngredient>, step: Single<&TutorialStep>, mut c
 }
 
 fn wait_for_finished_order(_ev: On<OrderFinished>, step: Single<&TutorialStep>, mut cmd: Commands) {
-    let TutorialStep::WaitForFinishedOrder = *step else {
+    let TutorialStep::WaitForFinishedOrder(_) = *step else {
         return;
     };
     cmd.delayed().secs(1.).trigger(NextTutorialStep);
+}
+
+fn handle_orderless_drink(_ev: On<OrderlessDrink>, step: Single<&TutorialStep>, mut cmd: Commands) {
+    match *step {
+        TutorialStep::WaitForFinishedOrder(ingredients) => {
+            let ingredients = Arc::new(ingredients.clone());
+            cmd.spawn_scene(bsn! {
+                #tutorial_text
+                @{popup("Oops, wrong drink!\nTry that order again. I'll give you the needed ingredients.")}
+                DespawnOnExit<Screen>(Screen::Gameplay)
+            })
+            .observe(move |_ev: On<TextPopupClosed>, mut cmd: Commands| {
+                for ingredient in ingredients.iter() {
+                    cmd.trigger(ingredient::AddIngredient(*ingredient));
+                }
+            });
+        }
+        _ => {
+            cmd.spawn_scene(bsn! {
+                #tutorial_text
+                @{popup("Shoot, something went wrong...\nLet's try this again.")}
+                DespawnOnExit<Screen>(Screen::Gameplay)
+            })
+            .observe(
+                move |_ev: On<TextPopupClosed>, mut next: ResMut<NextState<Screen>>| {
+                    next.set(Screen::Gameplay);
+                },
+            );
+        }
+    }
 }

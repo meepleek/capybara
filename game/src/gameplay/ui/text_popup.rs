@@ -4,6 +4,7 @@ use crate::{gameplay::ui::button, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_popup_cooldown);
+    app.add_observer(remove_previous_popups);
 }
 
 #[derive(EntityEvent)]
@@ -70,6 +71,18 @@ fn tick_popup_cooldown(
         if timer.just_finished() {
             cmd.try_remove_from::<TextPopupContinuBtnCooldown>(e);
             cmd.try_remove_from::<InteractionDisabled>(e);
+        }
+    }
+}
+
+fn remove_previous_popups(
+    ev: On<Add<TextPopup>>,
+    popup_q: Query<Entity, With<TextPopup>>,
+    mut cmd: Commands,
+) {
+    for e in &popup_q {
+        if e != ev.entity {
+            cmd.try_despawn(e);
         }
     }
 }
