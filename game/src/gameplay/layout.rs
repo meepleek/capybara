@@ -145,16 +145,18 @@ impl GameLayout<'_, '_> {
 fn move_inventory_on_resize<TInventoryItem: Component + InventoryPosition>(
     mut resize_mr: MessageReader<WindowResized>,
     mut ingredient_q: Query<
-        (&mut Transform, &mut DragPosition, &InventoryIndex),
+        (&mut Transform, Option<&mut DragPosition>, &InventoryIndex),
         (With<TInventoryItem>, Without<IgnoreDrag>),
     >,
     layout: GameLayout,
 ) {
     if resize_mr.clear_any() {
-        for (mut t, mut drag, idx) in &mut ingredient_q {
+        for (mut t, drag, idx) in &mut ingredient_q {
             t.translation =
                 TInventoryItem::inventory_position(&layout, idx).extend(t.translation.z);
-            drag.drag_position = t.translation.truncate();
+            if let Some(mut drag) = drag {
+                drag.drag_position = t.translation.truncate();
+            }
         }
     }
 }
