@@ -15,15 +15,24 @@ pub(super) fn plugin(app: &mut App) {
     // app.add_systems(Update, respawn_pieces.run_if(in_game));
 }
 
-#[expect(dead_code)]
 #[derive(Debug, Clone)]
 pub struct LevelData {
-    piece_bag: Vec<PieceTemplate>,
-    piece_bag_random_count: u8,
-    concurrent_order_max: u8,
-    order_count: u8,
-    customers: [CustomerKind; 3],
-    cauldron_count: u8,
+    pub piece_bag: Vec<PieceTemplate>,
+    pub piece_bag_random_count: u8,
+    pub concurrent_order_max: u8,
+    pub order_count: u8,
+    pub customers: [CustomerKind; 3],
+}
+impl LevelData {
+    pub fn basics() -> Self {
+        LevelData {
+            piece_bag: PieceTemplate::classic_bag(),
+            piece_bag_random_count: 1,
+            concurrent_order_max: 1,
+            order_count: 5,
+            customers: CustomerKind::regulars(),
+        }
+    }
 }
 
 fn processed_finished_order(_ev: On<OrderFinished>) {

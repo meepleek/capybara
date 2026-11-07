@@ -3,24 +3,23 @@ use mplk_ecs::relationship_1_to_n;
 use crate::{
     gameplay::{
         drag::DraggableDrop,
-        grid::IngredientGrid,
         ingredient::Ingredient,
-        layout::{GameLayout, LayoutElementPosition},
+        inventory::InventoryIndex,
+        layout::{GameLayout, InventoryPosition},
     },
     prelude::*,
     screens::run_conditions::in_game,
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Gameplay), setup);
     app.add_systems(Update, tick_cauldron_timer.run_if(in_game));
     app.add_observer(on_ingredient_drop)
         .add_observer(readd_cauldron);
 }
 
-impl LayoutElementPosition for Cauldron {
-    fn position(layout: &GameLayout, _grid: &IngredientGrid) -> Vec2 {
-        layout.cauldron_position()
+impl InventoryPosition for Cauldron {
+    fn inventory_position(layout: &GameLayout, idx: &gameplay::inventory::InventoryIndex) -> Vec2 {
+        layout.cauldron_position(idx.0)
     }
 }
 
@@ -47,14 +46,11 @@ pub struct OrderlessDrink {
     pub ingredients: Vec<Ingredient>,
 }
 
-fn setup(mut cmd: Commands, layout: GameLayout) {
-    cmd.spawn_scene(cauldron_scene(layout.cauldron_position()));
-}
-
-fn cauldron_scene(position: Vec2) -> impl Scene {
+pub fn cauldron_scene(position: Vec2, idx: u8) -> impl Scene {
     bsn! {
         #cauldron
         Cauldron
+        InventoryIndex(idx)
         Transform { translation: {position.extend(1.)} }
         from_collection(move |sprites: &SpriteAssets| Sprite {
             image: sprites.bar_sheet.clone(),

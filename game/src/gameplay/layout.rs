@@ -22,8 +22,8 @@ pub(super) fn plugin(app: &mut App) {
             move_inventory_on_resize::<Piece>,
             move_inventory_on_resize::<Customer>,
             move_inventory_on_resize::<Order>,
+            move_inventory_on_resize::<Cauldron>,
             move_element_on_resize::<IngredientGrid>,
-            move_element_on_resize::<Cauldron>,
         )
             .run_if(in_game),
     );
@@ -103,13 +103,13 @@ impl GameLayout<'_, '_> {
     }
 
     // todo: redo to indexed since there could be multiple
-    pub fn cauldron_position(&self) -> Vec2 {
+    pub fn cauldron_position(&self, idx: u8) -> Vec2 {
         let window_half = self.window_half_size();
         Vec2::new(
             window_half.x // right edge
                 - 90. // extra margin
                 - Self::PADDING,
-            0.,
+            window_half.y - 180. - 280. * idx as f32 - Self::PADDING,
         )
     }
 

@@ -21,11 +21,16 @@ impl InventoryPosition for Customer {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone, Copy, Default)]
 pub enum CustomerKind {
+    #[default]
     Regular,
     Fast,
     Snobby,
     Critic,
-    Tutorial,
+}
+impl CustomerKind {
+    pub fn regulars() -> [CustomerKind; 3] {
+        [CustomerKind::Regular; 3]
+    }
 }

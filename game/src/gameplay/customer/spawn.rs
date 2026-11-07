@@ -1,7 +1,7 @@
 use crate::{
     gameplay::{
         customer::{
-            Customer,
+            Customer, CustomerKind,
             order::{NewOrder, order_scene},
         },
         inventory::InventoryIndex,
@@ -11,17 +11,7 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Gameplay), setup);
     app.add_observer(process_new_order);
-}
-
-pub const CUSTOMER_COUNT: u8 = 3;
-
-fn setup(mut cmd: Commands, layout: GameLayout) {
-    for i in 0..CUSTOMER_COUNT {
-        let pos = layout.customer_position(i);
-        cmd.spawn_scene(customer_scene(i, pos.extend(1.)));
-    }
 }
 
 fn process_new_order(
@@ -34,10 +24,11 @@ fn process_new_order(
     cmd.spawn_scene(order_scene(ev.event(), idx.0, &layout));
 }
 
-fn customer_scene(idx: u8, translation: Vec3) -> impl Scene {
+pub fn customer_scene(idx: u8, translation: Vec3, kind: CustomerKind) -> impl Scene {
     bsn! {
         #customer
         Customer
+        kind
         InventoryIndex(idx)
         Transform { translation }
         from_collection(move |sprites: &SpriteAssets| Sprite {

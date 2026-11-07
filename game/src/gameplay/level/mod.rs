@@ -1,5 +1,7 @@
 use crate::{
     gameplay::{
+        cauldron::{Cauldron, cauldron_scene},
+        customer::{CustomerKind, spawn::customer_scene},
         grid::spawn::grid_scene,
         ingredient::CommonIngredient,
         layout::GameLayout,
@@ -18,7 +20,8 @@ pub mod tutorial;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((tutorial::plugin, spawn::plugin, regular::plugin));
-    app.insert_resource(LevelIndex(0));
+    app.insert_resource(LevelIndex(1));
+    // app.insert_resource(LevelIndex(0));
     app.add_observer(level_finished);
     app.add_systems(OnEnter(Screen::Gameplay), setup_level);
 }
@@ -43,7 +46,10 @@ impl LevelKind {
     pub fn levels() -> Vec<LevelKind> {
         use LevelKind::*;
 
-        vec![Tutorial(TutorialLevelData::intro_to_basics())]
+        vec![
+            Tutorial(TutorialLevelData::intro_to_basics()),
+            Regular(LevelData::basics()),
+        ]
     }
 
     pub fn level(idx: u8) -> LevelKind {
@@ -73,6 +79,15 @@ impl CommonIngredient {
     }
 }
 
+impl Cauldron {
+    pub fn count(level_idx: u8) -> u8 {
+        match level_idx {
+            0..8 => 1,
+            _ => 2,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Tool {
     IngredientFuser,
@@ -93,24 +108,51 @@ fn setup_level(
     layout: GameLayout,
     mut next_level_type: ResMut<NextState<GameplayLevel>>,
 ) {
-    let level = LevelKind::level(lvl_idx.0);
+    let lvl_idx = lvl_idx.0;
+    let level = LevelKind::level(lvl_idx);
     match level {
         LevelKind::Tutorial(tutorial) => {
             next_level_type.set(GameplayLevel::Tutorial);
-            cmd.spawn_scene(grid_scene(
-                &layout,
-                Some(tutorial.initial_board.grid),
-                lvl_idx.0,
-            ));
             cmd.spawn_scene(bsn! {
                 #tutorial_state
                 TutorialState {
                     steps: {tutorial.steps}
                 }
             });
+            // grid
+            cmd.spawn_scene(grid_scene(
+                &layout,
+                Some(tutorial.initial_board.grid),
+                lvl_idx,
+            ));
+            // customer
+            let customer_idx = 0;
+            let pos = layout.customer_position(customer_idx);
+            cmd.spawn_scene(customer_scene(
+                customer_idx,
+                pos.extend(1.),
+                CustomerKind::default(),
+            ));
+            // cauldron
+            let cauldron_idx = 0;
+            cmd.spawn_scene(cauldron_scene(
+                layout.cauldron_position(cauldron_idx),
+                cauldron_idx,
+            ));
         }
-        LevelKind::Regular(_level_data) => {
+        LevelKind::Regular(level_data) => {
             next_level_type.set(GameplayLevel::Regular);
+            // grid
+            cmd.spawn_scene(grid_scene(&layout, None, lvl_idx));
+            // customers
+            for (i, kind) in level_data.customers.iter().cloned().enumerate() {
+                let pos = layout.customer_position(i as u8);
+                cmd.spawn_scene(customer_scene(i as u8, pos.extend(1.), kind));
+            }
+            // cauldron(s)
+            for i in 0..Cauldron::count(lvl_idx) {
+                cmd.spawn_scene(cauldron_scene(layout.cauldron_position(i), i));
+            }
         }
     }
 }
