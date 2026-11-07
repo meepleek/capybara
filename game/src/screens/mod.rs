@@ -25,6 +25,7 @@ pub enum Screen {
 #[source(Screen = Screen::Gameplay)]
 pub enum GameplayLevel {
     #[default]
+    Setup,
     Regular,
     Tutorial,
 }

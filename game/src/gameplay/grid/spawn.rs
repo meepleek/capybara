@@ -3,7 +3,7 @@ use mplk_grid::bit_grid::BitGrid;
 
 use crate::gameplay::{
     grid::{GridSection, INGREDIENT_GRID_SIZE, INGREDIENT_TILE_SIZE, IngredientGrid},
-    ingredient::CommonIngredient,
+    ingredient::{CommonIngredient, Ingredient},
     layout::GameLayout,
 };
 pub use crate::prelude::*;
@@ -30,13 +30,15 @@ pub fn grid_scene(layout: &GameLayout, grid: Option<BitGrid>, level_idx: u8) -> 
     sections.extend((0..9).map(GridSection::Area));
 
     for section in sections {
-        let ingredient = CommonIngredient::section_ingredient(section, level_idx);
+        let ingredient =
+            Ingredient::Common(CommonIngredient::section_ingredient(section, level_idx));
         let position = layout.grid_section_position(&grid, section);
         let ingredient_scene = ingredient.icon_scene(position.extend(0.));
         ingredient_icons.push(Box::new(ingredient_scene));
     }
 
     bsn! {
+        #ingredient_grid
         grid
         Transform::from_translation(position.extend(0.))
         Visibility

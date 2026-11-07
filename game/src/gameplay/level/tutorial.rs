@@ -1,16 +1,25 @@
+use std::collections::VecDeque;
+
+use mplk_ecs::observer::ensure_single_at_most;
 use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
 use crate::{
     gameplay::{
+        customer::order::NewOrder,
         grid::INGREDIENT_TILE_SIZE,
-        ingredient::{CommonIngredient, Ingredient},
-        level::Tool,
+        ingredient::{self, CommonIngredient, Ingredient},
+        level::{LevelFinished, Tool},
         piece::template::PieceTemplate,
     },
     prelude::*,
 };
 
-pub(super) fn plugin(_app: &mut App) {}
+pub(super) fn plugin(app: &mut App) {
+    app.add_observer(ensure_single_at_most::<TutorialState>)
+        .add_observer(start_tutorial)
+        .add_observer(next_step)
+        .add_observer(process_step);
+}
 
 #[derive(Debug, Clone)]
 pub struct TutorialLevelData {
@@ -49,10 +58,7 @@ impl TutorialLevelData {
                     "Oh look, our first order has come in. Let's get cracking then.",
                 ),
                 TutorialStep::text("On your left is the ingredient board."),
-                AddPiece {
-                    template: T,
-                    cw_rotations: 0,
-                },
+                TutorialStep::piece(T),
                 TutorialStep::text(
                     "Drag pieces to fill in rows, columns and rows to synthentize whatever is shown in or next to those areas.",
                 ),
@@ -88,14 +94,14 @@ impl TutorialLevelData {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
 pub enum TutorialStep {
     Text(String),
     AddPiece {
         template: PieceTemplate,
         cw_rotations: u8,
     },
-    AddIngredient(CommonIngredient),
+    AddIngredient(Ingredient),
     WaitForIngredient(Ingredient),
     Order(Vec<Ingredient>),
     WaitForFinishedOrder,
@@ -105,11 +111,82 @@ impl TutorialStep {
     pub fn text(text: impl Into<String>) -> Self {
         Self::Text(text.into())
     }
+
+    pub fn piece(piece: PieceTemplate) -> Self {
+        Self::rotated_piece(piece, 0)
+    }
+
+    pub fn rotated_piece(piece: PieceTemplate, cw_rotations: u8) -> Self {
+        Self::AddPiece {
+            template: piece,
+            cw_rotations,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct TutorialBoardState {
-    // todo: make this a bitgrid?
     pub grid: BitGrid,
     pub tools: Vec<Tool>,
+}
+
+#[derive(Component, Debug, Clone, FromTemplate)]
+pub struct TutorialState {
+    pub steps: VecDeque<TutorialStep>,
+}
+
+#[derive(Event)]
+pub struct NextTutorialStep;
+
+fn start_tutorial(_ev: On<Insert<TutorialState>>, mut cmd: Commands) {
+    cmd.trigger(NextTutorialStep);
+}
+
+fn next_step(
+    _ev: On<NextTutorialStep>,
+    mut tut_state: Single<&mut TutorialState>,
+    mut cmd: Commands,
+) {
+    cmd.despawn_all::<With<TutorialStep>>();
+    match tut_state.steps.pop_front() {
+        Some(step) => {
+            cmd.spawn_scene(bsn! {
+                #tutorial_step
+                step
+            });
+        }
+        None => {
+            cmd.trigger(LevelFinished);
+        }
+    };
+}
+
+fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut cmd: Commands) {
+    let step = or_return!(step_q.get(ev.entity));
+    let next_step_delay = match step {
+        TutorialStep::Text(text) => {
+            todo!()
+        }
+        TutorialStep::AddPiece {
+            template,
+            cw_rotations,
+        } => todo!(),
+        TutorialStep::AddIngredient(ingredient) => {
+            cmd.trigger(ingredient::AddIngredient(*ingredient));
+            Some(sec(1.))
+        }
+        TutorialStep::WaitForIngredient(ingredient) => todo!(),
+        TutorialStep::Order(ingredients) => {
+            cmd.trigger(NewOrder {
+                ingredients: ingredients.clone(),
+                duration: todo!(),
+                customer_e: todo!(),
+            });
+        }
+        TutorialStep::WaitForFinishedOrder => todo!(),
+        TutorialStep::ShowTool(tool) => todo!(),
+    };
+    if let Some(delay) = next_step_delay {
+        cmd.delayed().duration(delay).trigger(NextTutorialStep);
+    }
 }

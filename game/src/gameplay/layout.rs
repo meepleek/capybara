@@ -6,7 +6,7 @@ use crate::{
         customer::{Customer, order::Order},
         drag::{DragPosition, IgnoreDrag},
         grid::{GridSection, IngredientGrid},
-        ingredient::CommonIngredient,
+        ingredient::Ingredient,
         inventory::InventoryIndex,
         piece::Piece,
     },
@@ -18,7 +18,7 @@ pub(super) fn plugin(app: &mut App) {
     app.add_systems(
         Update,
         (
-            move_inventory_on_resize::<CommonIngredient>,
+            move_inventory_on_resize::<Ingredient>,
             move_inventory_on_resize::<Piece>,
             move_inventory_on_resize::<Customer>,
             move_inventory_on_resize::<Order>,

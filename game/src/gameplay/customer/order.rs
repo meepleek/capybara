@@ -3,7 +3,7 @@ use mplk_ecs::relationship_1_to_n;
 use crate::{
     gameplay::{
         cauldron::{DrinkReady, OrderlessDrink},
-        ingredient::CommonIngredient,
+        ingredient::Ingredient,
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
     },
@@ -23,7 +23,7 @@ pub(super) fn plugin(app: &mut App) {
 
 #[derive(Component, Debug, Clone, FromTemplate)]
 pub struct Order {
-    pub ingredients: Vec<CommonIngredient>,
+    pub ingredients: Vec<Ingredient>,
     pub timer: Timer,
 }
 impl InventoryPosition for Order {
@@ -36,7 +36,7 @@ relationship_1_to_n!(OrderOf, CustomerOrders);
 
 #[derive(Event, Debug)]
 pub struct NewOrder {
-    pub ingredients: Vec<CommonIngredient>,
+    pub ingredients: Vec<Ingredient>,
     pub duration: Duration,
     pub customer_e: Entity,
 }

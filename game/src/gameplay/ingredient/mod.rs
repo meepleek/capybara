@@ -14,7 +14,10 @@ pub(super) fn plugin(app: &mut App) {
 
 pub(crate) const INGREDIENT_MAX: u8 = 6;
 
-#[derive(Debug, Component, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Event)]
+pub struct AddIngredient(pub Ingredient);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum CommonIngredient {
     #[default]
     Honey,
@@ -35,23 +38,6 @@ impl CommonIngredient {
             CommonIngredient::Air => 12,
             CommonIngredient::Coffee => 13,
             CommonIngredient::Water => 14,
-        }
-    }
-
-    pub fn icon_scene(self, translation: Vec3) -> impl Scene {
-        let index = self.spritesheet_idx();
-        bsn! {
-            #ingredient_src_icon
-            Transform { translation }
-            from_collection(move |sprites: &SpriteAssets| Sprite {
-                image: sprites.ingredients_sheet.clone(),
-                texture_atlas: Some(TextureAtlas {
-                    layout: sprites.ingredients_layout.clone(),
-                    index
-                }),
-                custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
-                ..default()
-            })
         }
     }
 
@@ -132,13 +118,43 @@ impl FusedIngredient {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Ingredient {
     Common(CommonIngredient),
     Fused(FusedIngredient),
 }
+impl Ingredient {
+    pub fn icon_scene(self, translation: Vec3) -> impl Scene {
+        let index = self.spritesheet_idx();
+        bsn! {
+            #ingredient_src_icon
+            Transform { translation }
+            from_collection(move |sprites: &SpriteAssets| Sprite {
+                image: sprites.ingredients_sheet.clone(),
+                texture_atlas: Some(TextureAtlas {
+                    layout: sprites.ingredients_layout.clone(),
+                    index
+                }),
+                custom_size: Some(Vec2::splat(INGREDIENT_TILE_SIZE_F32)),
+                ..default()
+            })
+        }
+    }
+
+    fn spritesheet_idx(&self) -> usize {
+        match self {
+            Ingredient::Common(common) => common.spritesheet_idx(),
+            Ingredient::Fused(fused) => fused.spritesheet_idx(),
+        }
+    }
+}
 impl Default for Ingredient {
     fn default() -> Self {
         Self::Common(CommonIngredient::Apple)
+    }
+}
+impl InventoryPosition for Ingredient {
+    fn inventory_position(layout: &GameLayout, idx: &InventoryIndex) -> Vec2 {
+        layout.ingredient_position(idx.0)
     }
 }
