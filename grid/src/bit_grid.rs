@@ -74,7 +74,7 @@ impl ops::SubAssign<usize> for BitGridMask {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BitGrid {
     grid_size: TileGridSize,
     tile_size: u16,

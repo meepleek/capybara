@@ -21,6 +21,7 @@ impl InventoryPosition for Customer {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum CustomerKind {
     Regular,
     Fast,

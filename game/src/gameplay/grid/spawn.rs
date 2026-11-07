@@ -8,16 +8,16 @@ use crate::gameplay::{
 };
 pub use crate::prelude::*;
 
-pub(super) fn plugin(app: &mut App) {
-    app.add_systems(OnEnter(Screen::Gameplay), setup);
-}
+pub(super) fn plugin(_app: &mut App) {}
 
-fn setup(mut cmd: Commands, layout: GameLayout) {
-    let grid = BitGrid::new(
-        (INGREDIENT_GRID_SIZE, INGREDIENT_GRID_SIZE),
-        INGREDIENT_TILE_SIZE,
-    );
-    let mut grid = IngredientGrid::new(grid, Vec2::ZERO).unwrap();
+pub fn grid_scene(layout: &GameLayout, grid: Option<BitGrid>) -> impl Scene {
+    let grid = grid.unwrap_or_else(|| {
+        BitGrid::new(
+            (INGREDIENT_GRID_SIZE, INGREDIENT_GRID_SIZE),
+            INGREDIENT_TILE_SIZE,
+        )
+    });
+    let mut grid = IngredientGrid::new(grid, Vec2::ZERO).expect("invalid bitgrid");
     let position = layout.grid_position(&grid);
     grid.set_position(position);
 
@@ -36,11 +36,11 @@ fn setup(mut cmd: Commands, layout: GameLayout) {
         ingredient_icons.push(Box::new(ingredient_scene));
     }
 
-    cmd.spawn_scene(bsn! {
+    bsn! {
         grid
         Transform::from_translation(position.extend(0.))
         Visibility
         DespawnOnExit<Screen>(Screen::Gameplay)
         Children[{ingredient_icons}]
-    });
+    }
 }

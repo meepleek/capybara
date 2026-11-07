@@ -12,9 +12,10 @@ use crate::{
 
 pub(super) fn plugin(_app: &mut App) {}
 
+#[derive(Debug, Clone)]
 pub struct TutorialLevelData {
-    initial_board: TutorialBoardState,
-    steps: Vec<TutorialStep>,
+    pub initial_board: TutorialBoardState,
+    pub steps: Vec<TutorialStep>,
 }
 impl TutorialLevelData {
     pub fn intro_to_basics() -> TutorialLevelData {
@@ -80,6 +81,7 @@ impl TutorialLevelData {
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum TutorialStep {
     Text(String),
     AddIngredient(CommonIngredient),
@@ -94,11 +96,12 @@ impl TutorialStep {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TutorialBoardState {
     // todo: make this a bitgrid?
-    grid: BitGrid,
+    pub grid: BitGrid,
     // unlike regular lvls allows dealing out less pieces
-    pieces: Vec<Vec<PieceTemplate>>,
-    piece_bag: Vec<PieceTemplate>,
-    tools: Vec<Tool>,
+    pub pieces: Vec<Vec<PieceTemplate>>,
+    pub piece_bag: Vec<PieceTemplate>,
+    pub tools: Vec<Tool>,
 }

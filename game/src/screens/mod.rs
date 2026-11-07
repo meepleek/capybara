@@ -22,3 +22,13 @@ pub enum Screen {
     Gameplay,
     GameOver,
 }
+
+// pub fn is_in_game<TState: States>(state: TState) -> impl FnMut(Res<State<Screen>>) -> bool + Clone {
+//     move |state| match state {
+//         Some(fade_state) => match fade_state.get() {
+//             FadeState::FadingIn(to_state) => *to_state == state,
+//             _ => false,
+//         },
+//         None => false,
+//     }
+// }
