@@ -6,15 +6,13 @@ use mplk_grid::{bit_grid::BitGrid, ext::ParsedGrid};
 
 use crate::{
     gameplay::{
-        customer::order::NewOrder,
+        customer::{Customer, order::NewOrder},
         grid::INGREDIENT_TILE_SIZE,
         ingredient::{self, CommonIngredient, Ingredient},
+        inventory::InventoryIndex,
         level::{LevelFinished, Tool},
         piece::template::PieceTemplate,
-        ui::{
-            text_popup::{TextPopupClosed, popup},
-            ui_root,
-        },
+        ui::text_popup::{TextPopupClosed, popup},
     },
     prelude::*,
 };
@@ -143,6 +141,12 @@ pub struct TutorialState {
 #[derive(Event)]
 pub struct NextTutorialStep;
 
+#[derive(EntityEvent)]
+pub struct TutorialNewOrder {
+    entity: Entity,
+    ingredients: Vec<Ingredient>,
+}
+
 fn start_tutorial(_ev: On<Insert<TutorialState>>, mut cmd: Commands) {
     cmd.trigger(NextTutorialStep);
 }
@@ -191,11 +195,12 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
         }
         TutorialStep::WaitForIngredient(ingredient) => todo!(),
         TutorialStep::Order(ingredients) => {
-            cmd.trigger(NewOrder {
+            or_return!(cmd.get_entity(ev.entity)).observe(add_new_order);
+            cmd.trigger(TutorialNewOrder {
+                entity: ev.entity,
                 ingredients: ingredients.clone(),
-                duration: todo!(),
-                customer_e: todo!(),
             });
+            None
         }
         TutorialStep::WaitForFinishedOrder => todo!(),
         TutorialStep::ShowTool(tool) => todo!(),
@@ -203,6 +208,20 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
     if let Some(delay) = next_step_delay {
         cmd.delayed().duration(delay).trigger(NextTutorialStep);
     }
+}
+
+fn add_new_order(
+    ev: On<TutorialNewOrder>,
+    mut cmd: Commands,
+    customer_q: Query<Entity, With<Customer>>,
+) {
+    let customer_e = or_return!(customer_q.iter().next());
+    cmd.trigger(NewOrder {
+        ingredients: ev.ingredients.clone(),
+        duration: sec(900.),
+        customer_e,
+    });
+    cmd.delayed().secs(1.).trigger(NextTutorialStep);
 }
 
 fn handle_text_popup_closed(_ev: On<TextPopupClosed>, mut cmd: Commands) {
