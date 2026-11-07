@@ -21,7 +21,7 @@ pub mod tutorial;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((tutorial::plugin, spawn::plugin, regular::plugin));
-    app.insert_resource(LevelIndex(1));
+    app.insert_resource(LevelIndex(2));
     // app.insert_resource(LevelIndex(0));
     app.add_observer(level_finished);
     app.add_systems(OnEnter(Screen::Gameplay), setup_level);
@@ -50,6 +50,7 @@ impl LevelKind {
         vec![
             Tutorial(TutorialLevelData::intro_to_basics()),
             Regular(LevelData::basics()),
+            Tutorial(TutorialLevelData::ingredient_abilities()),
         ]
     }
 
@@ -136,11 +137,13 @@ fn setup_level(
                 CustomerKind::default(),
             ));
             // cauldron
-            let cauldron_idx = 0;
-            cmd.spawn_scene(cauldron_scene(
-                layout.cauldron_position(cauldron_idx),
-                cauldron_idx,
-            ));
+            if tutorial.initial_board.show_cauldron {
+                let cauldron_idx = 0;
+                cmd.spawn_scene(cauldron_scene(
+                    layout.cauldron_position(cauldron_idx),
+                    cauldron_idx,
+                ));
+            }
         }
         LevelKind::Regular(level_data) => {
             next_level_type.set(GameplayLevel::Regular);

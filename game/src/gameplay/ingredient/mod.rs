@@ -17,6 +17,9 @@ pub(crate) const INGREDIENT_MAX: u8 = 6;
 #[derive(Event)]
 pub struct AddIngredient(pub Ingredient);
 
+#[derive(Event)]
+pub struct AbilityUsed(pub Ingredient);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, strum::EnumIter)]
 pub enum CommonIngredient {
     #[default]

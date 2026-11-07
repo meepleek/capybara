@@ -11,7 +11,7 @@ use crate::{
             order::{NewOrder, OrderFinished},
         },
         grid::INGREDIENT_TILE_SIZE,
-        ingredient::{self, AddIngredient, CommonIngredient, Ingredient},
+        ingredient::{self, AbilityUsed, AddIngredient, CommonIngredient, Ingredient},
         level::{LevelFinished, Tool},
         piece::{AddPiece, template::PieceTemplate},
         ui::text_popup::{TextPopupClosed, popup},
@@ -26,6 +26,7 @@ pub(super) fn plugin(app: &mut App) {
         .add_observer(process_step)
         .add_observer(wait_for_ingredient)
         .add_observer(wait_for_finished_order)
+        .add_observer(wait_for_used_ability)
         .add_observer(handle_orderless_drink);
 }
 
@@ -56,6 +57,7 @@ impl TutorialLevelData {
             initial_board: TutorialBoardState {
                 grid: Self::parse_grid(grid),
                 tools: vec![],
+                show_cauldron: true,
             },
             steps: vec![
                 TutorialStep::text(
@@ -82,6 +84,46 @@ impl TutorialLevelData {
                 TutorialStep::rotated_piece(Line4, 1),
                 WaitForFinishedOrder(vec![Common(Apple), Common(Orange)]),
                 TutorialStep::text("Good work!\nSee you soon for your first full shift."),
+            ],
+        }
+    }
+
+    pub fn ingredient_abilities() -> TutorialLevelData {
+        use CommonIngredient::*;
+        use Ingredient::*;
+        use PieceTemplate::*;
+        use TutorialStep::*;
+
+        let grid = r"
+#########
+#########
+#########
+#########
+#########
+#########
+#########
+#########
+#########
+";
+        TutorialLevelData {
+            initial_board: TutorialBoardState {
+                grid: Self::parse_grid(grid),
+                tools: vec![],
+                show_cauldron: false,
+            },
+            steps: vec![
+                TutorialStep::text(
+                    "You might have already noticed that ingredients can be used for other things.",
+                ),
+                TutorialStep::rotated_piece(L, 1),
+                TutorialStep::text(
+                    "The piece I just gave you won't fit in without rotating it a bit.\nTry to use this apple.",
+                ),
+                AddIngredient(Common(Apple)),
+                WaitForIngredientAbility(Common(Apple)),
+                TutorialStep::text(
+                    "How do like them apples?\nI'll let you figure what the other do on your own.",
+                ),
             ],
         }
     }
@@ -115,6 +157,7 @@ pub enum TutorialStep {
     WaitForIngredient(Ingredient),
     Order(Vec<Ingredient>),
     WaitForFinishedOrder(Vec<Ingredient>),
+    WaitForIngredientAbility(Ingredient),
     ShowTool(Tool),
 }
 impl TutorialStep {
@@ -138,6 +181,7 @@ impl TutorialStep {
 pub struct TutorialBoardState {
     pub grid: BitGrid,
     pub tools: Vec<Tool>,
+    pub show_cauldron: bool,
 }
 
 #[derive(Component, Debug, Clone, FromTemplate)]
@@ -212,7 +256,9 @@ fn process_step(ev: On<Insert<TutorialStep>>, step_q: Query<&TutorialStep>, mut 
             });
             None
         }
-        TutorialStep::WaitForIngredient(_) | TutorialStep::WaitForFinishedOrder(_) => None,
+        TutorialStep::WaitForIngredient(_)
+        | TutorialStep::WaitForFinishedOrder(_)
+        | TutorialStep::WaitForIngredientAbility(_) => None,
         TutorialStep::ShowTool(tool) => todo!(),
     };
     if let Some(delay) = next_step_delay {
@@ -252,6 +298,15 @@ fn wait_for_finished_order(_ev: On<OrderFinished>, step: Single<&TutorialStep>, 
         return;
     };
     cmd.delayed().secs(1.).trigger(NextTutorialStep);
+}
+
+fn wait_for_used_ability(ev: On<AbilityUsed>, step: Single<&TutorialStep>, mut cmd: Commands) {
+    let TutorialStep::WaitForIngredient(ingredient) = *step else {
+        return;
+    };
+    if ev.0 == *ingredient {
+        cmd.delayed().secs(1.).trigger(NextTutorialStep);
+    }
 }
 
 fn handle_orderless_drink(_ev: On<OrderlessDrink>, step: Single<&TutorialStep>, mut cmd: Commands) {
