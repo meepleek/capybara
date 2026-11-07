@@ -6,7 +6,7 @@ use crate::{
         ingredient::CommonIngredient,
         layout::GameLayout,
         level::{
-            regular::LevelData,
+            regular::{LevelData, LevelStats},
             tutorial::{TutorialLevelData, TutorialState},
         },
         piece::bag::PieceBag,
@@ -109,6 +109,7 @@ fn setup_level(
     layout: GameLayout,
     mut next_level_type: ResMut<NextState<GameplayLevel>>,
 ) {
+    let mut rng = rng();
     let lvl_idx = lvl_idx.0;
     let level = LevelKind::level(lvl_idx);
     match level {
@@ -143,14 +144,20 @@ fn setup_level(
         }
         LevelKind::Regular(level_data) => {
             next_level_type.set(GameplayLevel::Regular);
-            cmd.spawn_scene(bsn! {
-                #piece_bag
-                PieceBag::new(level_data.piece_bag.clone(), level_data.piece_bag_random_count)
-            });
+            cmd.spawn((
+                PieceBag::new(
+                    level_data.piece_bag.clone(),
+                    level_data.piece_bag_random_count,
+                ),
+                LevelStats::default(),
+                level_data.clone(),
+            ));
             // grid
             cmd.spawn_scene(grid_scene(&layout, None, lvl_idx));
             // customers
-            for (i, kind) in level_data.customers.iter().cloned().enumerate() {
+            let mut customers: Vec<_> = level_data.customers.iter().cloned().collect();
+            customers.shuffle(&mut rng);
+            for (i, kind) in customers.into_iter().enumerate() {
                 let pos = layout.customer_position(i as u8);
                 cmd.spawn_scene(customer_scene(i as u8, pos.extend(1.), kind));
             }

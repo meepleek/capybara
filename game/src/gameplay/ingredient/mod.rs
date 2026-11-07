@@ -17,7 +17,7 @@ pub(crate) const INGREDIENT_MAX: u8 = 6;
 #[derive(Event)]
 pub struct AddIngredient(pub Ingredient);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default, strum::EnumIter)]
 pub enum CommonIngredient {
     #[default]
     Honey,
@@ -78,6 +78,12 @@ impl CommonIngredient {
             Air => AirPlus,
             Coffee => Chocolate,
         }
+    }
+
+    pub fn valid_ingredients(lvl_idx: u8) -> Vec<CommonIngredient> {
+        CommonIngredient::iter()
+            .filter(|ing| ing.min_lvl() <= lvl_idx)
+            .collect()
     }
 }
 impl InventoryPosition for CommonIngredient {

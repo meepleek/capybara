@@ -1,8 +1,10 @@
+use mplk_ecs::observer::readd_default_component;
+
 use crate::{
     gameplay::{
         customer::{
             Customer, CustomerKind,
-            order::{NewOrder, order_scene},
+            order::{CustomerOrders, NewOrder, order_scene},
         },
         inventory::InventoryIndex,
         layout::GameLayout,
@@ -11,7 +13,8 @@ use crate::{
 };
 
 pub(super) fn plugin(app: &mut App) {
-    app.add_observer(process_new_order);
+    app.add_observer(process_new_order)
+        .add_observer(readd_default_component::<CustomerOrders>);
 }
 
 fn process_new_order(
@@ -29,6 +32,7 @@ pub fn customer_scene(idx: u8, translation: Vec3, kind: CustomerKind) -> impl Sc
         #customer
         Customer
         kind
+        CustomerOrders
         InventoryIndex(idx)
         Transform { translation }
         from_collection(move |sprites: &SpriteAssets| Sprite {

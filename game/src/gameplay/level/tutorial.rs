@@ -225,7 +225,6 @@ fn add_new_order(
     mut cmd: Commands,
     customer_q: Query<Entity, With<Customer>>,
 ) {
-    // todo: pick first customer?
     let customer_e = or_return!(customer_q.iter().next());
     cmd.trigger(NewOrder {
         ingredients: ev.ingredients.clone(),

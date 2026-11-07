@@ -49,6 +49,13 @@ pub fn ensure_single_at_most<C: Component>(
     }
 }
 
+pub fn readd_default_component<TComponent: Component + Default>(
+    ev: On<Remove<TComponent>>,
+    mut cmd: Commands,
+) {
+    or_return_quiet!(cmd.get_entity(ev.entity)).try_insert(TComponent::default());
+}
+
 pub fn map_event<'t, TSourceEv: EntityEvent, TTargetEv: EntityEvent<Trigger<'t>: Default>>(
     target_fn: impl Fn(Entity, &TSourceEv) -> TTargetEv,
 ) -> impl FnMut(On<TSourceEv>, Commands) {

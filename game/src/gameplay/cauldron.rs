@@ -1,4 +1,4 @@
-use mplk_ecs::relationship_1_to_n;
+use mplk_ecs::{observer::readd_default_component, relationship_1_to_n};
 
 use crate::{
     gameplay::{
@@ -14,7 +14,7 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_cauldron_timer.run_if(in_game));
     app.add_observer(on_ingredient_drop)
-        .add_observer(readd_cauldron);
+        .add_observer(readd_default_component::<Cauldron>);
 }
 
 impl InventoryPosition for Cauldron {
@@ -127,9 +127,4 @@ fn tick_cauldron_timer(
             cmd.try_remove_from::<CauldronTimer>(e);
         }
     }
-}
-
-// todo: handle this in a more generic way
-fn readd_cauldron(ev: On<Remove<Cauldron>>, mut cmd: Commands) {
-    cmd.try_insert_to(ev.entity, Cauldron::default());
 }

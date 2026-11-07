@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use crate::{
     gameplay::{
         inventory::InventoryIndex,
@@ -27,9 +29,32 @@ pub enum CustomerKind {
     Regular,
     Fast,
     Snobby,
-    Critic,
+    // Critic,
 }
 impl CustomerKind {
+    pub fn order_duration(self) -> Duration {
+        sec(match self {
+            CustomerKind::Regular => 60.,
+            CustomerKind::Fast => 40.,
+            CustomerKind::Snobby => 120.,
+        })
+    }
+
+    pub fn ingredient_rank(self) -> RangeInclusive<u8> {
+        match self {
+            CustomerKind::Regular => 1..=5,
+            CustomerKind::Fast => 1..=2,
+            CustomerKind::Snobby => 4..=7,
+        }
+    }
+
+    pub fn order_fused_ingredients(self) -> bool {
+        match self {
+            CustomerKind::Regular | CustomerKind::Snobby => true,
+            CustomerKind::Fast => false,
+        }
+    }
+
     pub fn regulars() -> [CustomerKind; 3] {
         [CustomerKind::Regular; 3]
     }
