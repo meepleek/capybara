@@ -25,7 +25,9 @@ fn process_completed_section(
 ) {
     for msg in section_mr.read() {
         let ingredient = CommonIngredient::section_ingredient(msg.0, level_idx.0);
-        cmd.trigger(AddIngredient(Ingredient::Common(ingredient)));
+        for _ in 0..2 {
+            cmd.trigger(AddIngredient(Ingredient::Common(ingredient)));
+        }
     }
 }
 
