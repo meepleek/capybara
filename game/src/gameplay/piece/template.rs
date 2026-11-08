@@ -22,31 +22,36 @@ pub enum PieceTemplate {
 impl PieceTemplate {
     pub fn piece(self) -> Piece {
         match self {
-            PieceTemplate::Line2 => Piece::new([(0, 0), (0, 1)]),
-            PieceTemplate::Line3 => Piece::new([(0, 0), (0, 1), (0, 2)]),
-            PieceTemplate::Line4 => Piece::new([(0, 0), (0, 1), (0, 2), (0, 3)]),
-            PieceTemplate::Square => Piece::new([(0, 0), (1, 0), (1, 1), (0, 1)]),
-            PieceTemplate::Corner => Piece::new([(0, 0), (1, 0), (0, 1)]),
-            PieceTemplate::L => Piece::new([(0, 0), (1, 0), (0, 1), (0, 2)]),
-            PieceTemplate::LFlip => Piece::new([(0, 0), (1, 0), (1, 1), (1, 2)]),
-            PieceTemplate::Z => Piece::new([(0, 0), (1, 0), (1, 1), (2, 1)]),
-            PieceTemplate::ZFlip => Piece::new([(2, 0), (1, 0), (1, 1), (0, 1)]),
-            PieceTemplate::T => Piece::new([(0, 0), (1, 0), (2, 0), (1, 1)]),
-            PieceTemplate::Cubby => Piece::new([(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)]),
-            PieceTemplate::Diag2 => Piece::new([(0, 0), (1, 1)]),
-            PieceTemplate::Diag3 => Piece::new([(0, 0), (1, 1), (2, 2)]),
-            PieceTemplate::Cross => Piece::new([(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)]),
-            PieceTemplate::X => Piece::new([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)]),
-            PieceTemplate::Donut => Piece::new([
-                (1, 0),
-                (2, 0),
-                (2, 1),
-                (2, 2),
-                (1, 2),
-                (0, 2),
-                (0, 1),
-                (0, 0),
-            ]),
+            PieceTemplate::Line2 => Piece::new([(0, 0), (0, 1)], (0., 0.5)),
+            PieceTemplate::Line3 => Piece::new([(0, 0), (0, 1), (0, 2)], (0., 1.)),
+            PieceTemplate::Line4 => Piece::new([(0, 0), (0, 1), (0, 2), (0, 3)], (0., 1.5)),
+            PieceTemplate::Square => Piece::new([(0, 0), (1, 0), (1, 1), (0, 1)], (-0.5, 0.5)),
+            PieceTemplate::Corner => Piece::new([(0, 0), (1, 0), (0, 1)], (-0.5, 0.5)),
+            PieceTemplate::L => Piece::new([(0, 0), (1, 0), (0, 1), (0, 2)], (-0.5, 1.)),
+            PieceTemplate::LFlip => Piece::new([(0, 0), (1, 0), (1, 1), (1, 2)], (-0.5, 1.)),
+            PieceTemplate::Z => Piece::new([(0, 0), (1, 0), (1, 1), (2, 1)], (-1., 0.5)),
+            PieceTemplate::ZFlip => Piece::new([(2, 0), (1, 0), (1, 1), (0, 1)], (-1., 0.5)),
+            PieceTemplate::T => Piece::new([(0, 0), (1, 0), (2, 0), (1, 1)], (-1., 0.5)),
+            PieceTemplate::Cubby => {
+                Piece::new([(0, 1), (0, 0), (1, 0), (2, 0), (2, 1)], (-1., 0.5))
+            }
+            PieceTemplate::Diag2 => Piece::new([(0, 0), (1, 1)], (-0.5, 0.5)),
+            PieceTemplate::Diag3 => Piece::new([(0, 0), (1, 1), (2, 2)], (-1., 1.)),
+            PieceTemplate::Cross => Piece::new([(1, 0), (0, 1), (1, 1), (1, 2), (2, 1)], (-1., 1.)),
+            PieceTemplate::X => Piece::new([(0, 0), (2, 0), (1, 1), (0, 2), (2, 2)], (-1., 1.)),
+            PieceTemplate::Donut => Piece::new(
+                [
+                    (1, 0),
+                    (2, 0),
+                    (2, 1),
+                    (2, 2),
+                    (1, 2),
+                    (0, 2),
+                    (0, 1),
+                    (0, 0),
+                ],
+                (-1., 1.),
+            ),
         }
     }
 

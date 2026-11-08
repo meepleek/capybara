@@ -1,3 +1,5 @@
+use mplk_ecs::{hiearchy::RotationAncestor, relationship::RelationshipEntity};
+
 use crate::{
     gameplay::{
         drag::{DragFocus, DragPosition, DraggableDrop, SnapData},
@@ -18,7 +20,9 @@ pub(super) fn on_drop(
     mut grid: Single<&mut IngredientGrid>,
     mut section_mw: MessageWriter<GridSectionCompletedMsg>,
 ) {
-    let tile = or_return!(grid.world_to_tile_center(ev.position));
+    let center_offset = ev.draggable.center * grid.tile_size() as f32;
+    let position = ev.position + center_offset;
+    let tile = or_return!(grid.world_to_tile_center(position));
     let completed_sections = or_return!(grid.place_piece(&ev.draggable, tile));
     tracing::info!(?completed_sections);
     for cs in completed_sections {
@@ -27,15 +31,22 @@ pub(super) fn on_drop(
 }
 
 fn snap_pieces_to_grid(
-    mut piece_q: Query<(&Piece, &mut DragPosition), With<DragFocus>>,
+    mut piece_q: Query<(&Piece, &mut DragPosition, &DragFocus)>,
     grid: Single<(Entity, &IngredientGrid)>,
 ) {
     let (grid_e, grid) = *grid;
-    for (piece, mut drag) in &mut piece_q {
-        if let Some(tile) = grid.world_to_tile(drag.drag_position)
+    let tile_size = grid.tile_size() as f32;
+    for (piece, mut drag, focus) in &mut piece_q {
+        if *focus != DragFocus::Active {
+            continue;
+        }
+
+        let center_offset = piece.center * tile_size;
+        let centered_position = drag.drag_position + center_offset;
+        if let Some(tile) = grid.world_to_tile(centered_position)
             && let Ok(_completed_sections) = grid.preview_piece_placement(piece, tile)
         {
-            let tile_pos = or_continue!(grid.tile_to_world(tile));
+            let tile_pos = or_continue!(grid.tile_to_world(tile)) - center_offset;
             drag.snapped_data = Some(SnapData {
                 position: tile_pos,
                 entity: grid_e,

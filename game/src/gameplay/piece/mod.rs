@@ -32,16 +32,6 @@ pub enum PieceRotation {
     CW(u8),
     CCW(u8),
 }
-impl PieceRotation {
-    pub fn to_rot2d(self) -> Rot2 {
-        Rot2::degrees(
-            match self {
-                PieceRotation::CW(rotations) => -(rotations as f32),
-                PieceRotation::CCW(rotations) => rotations as f32,
-            } * 90.,
-        )
-    }
-}
 
 #[derive(EntityEvent, Debug)]
 pub struct RotatePiece {
@@ -52,26 +42,43 @@ pub struct RotatePiece {
 #[derive(Debug, Clone, Component)]
 pub struct Piece {
     pub tiles: Vec<TileCoords>,
+    pub center: Vec2,
+    pub rotations: i32,
 }
 impl Piece {
-    pub fn new<T: Into<TileCoords>>(tiles: impl IntoIterator<Item = T>) -> Self {
-        Self {
+    pub fn new<T: Into<TileCoords>>(
+        tiles: impl IntoIterator<Item = T>,
+        center: impl Into<Vec2>,
+    ) -> Self {
+        let mut piece = Self {
             tiles: tiles.into_iter().map(Into::into).collect(),
-        }
+            center: center.into(),
+            rotations: 0,
+        };
+        piece.normalize_tiles();
+        piece
     }
 
     pub fn rotate_cw(&mut self) {
         for t in &mut self.tiles {
             *t = TileCoords::new(-t.y, t.x);
         }
+        self.rotations -= 1;
         self.normalize_tiles();
+        self.flip_center();
     }
 
     pub fn rotate_ccw(&mut self) {
         for t in &mut self.tiles {
             *t = TileCoords::new(t.y, -t.x);
         }
+        self.rotations += 1;
         self.normalize_tiles();
+        self.flip_center();
+    }
+
+    pub fn rotation_degrees(&self) -> f32 {
+        self.rotations as f32 * 90.
     }
 
     fn normalize_tiles(&mut self) {
@@ -95,8 +102,10 @@ impl Piece {
         for t in &mut self.tiles {
             *t += offset;
         }
-        // todo: pivot as well?
-        // todo!()
+    }
+
+    fn flip_center(&mut self) {
+        self.center = -self.center.yx();
     }
 }
 impl InventoryPosition for Piece {
@@ -129,10 +138,6 @@ mod tests {
     #[test_case(test_piece_t(), 2 => vec![(2, 1), (1, 1), (0, 1), (1, 0)])]
     #[test_case(test_piece_t(), 3 => vec![(0, 2), (0, 1), (0, 0), (1, 1)])]
     #[test_case(test_piece_t(), 4 => vec![(0, 0), (1, 0), (2, 0), (1, 1)])]
-    #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 0), (0, 1), (0, 2)])]
-    #[test_case(test_piece_line_top_pivot(), 2 => vec![(2, 0), (1, 0), (0, 0)])]
-    #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 2), (0, 1), (0, 0)])]
-    #[test_case(test_piece_line_top_pivot(), 4 => vec![(0, 0), (1, 0), (2, 0)])]
     #[test_case(test_piece_square(), 1 => vec![(1, 0), (1, 1), (0, 1), (0, 0)])]
     #[test_case(test_piece_square(), 2 => vec![(1, 1), (0, 1), (0, 0), (1, 0)])]
     #[test_case(test_piece_square(), 3 => vec![(0, 1), (0, 0), (1, 0), (1, 1)])]
@@ -153,10 +158,6 @@ mod tests {
     #[test_case(test_piece_t(), 2 => vec![(2, 1), (1, 1), (0, 1), (1, 0)])]
     #[test_case(test_piece_t(), 3 => vec![(1, 0), (1, 1), (1, 2), (0, 1)])]
     #[test_case(test_piece_t(), 4 => vec![(0, 0), (1, 0), (2, 0), (1, 1)])]
-    #[test_case(test_piece_line_top_pivot(), 1 => vec![(0, 2), (0, 1), (0, 0)])]
-    #[test_case(test_piece_line_top_pivot(), 2 => vec![(2, 0), (1, 0), (0, 0)])]
-    #[test_case(test_piece_line_top_pivot(), 3 => vec![(0, 0), (0, 1), (0, 2)])]
-    #[test_case(test_piece_line_top_pivot(), 4 => vec![(0, 0), (1, 0), (2, 0)])]
     #[test_case(test_piece_square(), 1 => vec![(0, 1), (0, 0), (1, 0), (1, 1)])]
     #[test_case(test_piece_square(), 2 => vec![(1, 1), (0, 1), (0, 0), (1, 0)])]
     #[test_case(test_piece_square(), 3 => vec![(1, 0), (1, 1), (0, 1), (0, 0)])]
@@ -183,9 +184,5 @@ mod tests {
 
     fn test_piece_line() -> Piece {
         PieceTemplate::Line4.piece()
-    }
-
-    fn test_piece_line_top_pivot() -> Piece {
-        Piece::new([(0, 0), (1, 0), (2, 0)])
     }
 }

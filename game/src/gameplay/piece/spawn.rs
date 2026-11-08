@@ -64,6 +64,7 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         tiles.push(Box::new(tile));
     }
 
+    let sprites_translation = (piece.center * INGREDIENT_TILE_SIZE_F32).extend(0.);
     let position = position.into();
     let translation = position.extend(0.);
     bsn! {
@@ -85,8 +86,8 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
         Children[
             #piece_sprites
             Visibility
-            Transform
-            RotationOf(#piece)
+            Transform { translation: sprites_translation }
+            RotationOf(#piece_root)
             Children [{tiles}]
         ]
     }

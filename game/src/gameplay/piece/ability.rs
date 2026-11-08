@@ -49,8 +49,10 @@ pub fn rotate_piece(ev: On<RotatePiece>, mut piece_q: Query<&mut Piece>, mut cmd
             }
         }
     }
+    let rotation_deg = piece.rotation_degrees();
+    tracing::warn!(rotation_deg);
     cmd.try_insert_to(
         ev.entity,
-        TransformRotationDegreesLensSrc::new(ev.rotation.to_rot2d().as_degrees()).duration(ms(300)),
+        TransformRotationDegreesLensSrc::new(rotation_deg).duration(ms(300)),
     );
 }
