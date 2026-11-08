@@ -105,8 +105,6 @@ fn add_piece(
     }
     let idx = ev.idx.unwrap_or_else(|| piece_q.count() as u8);
     let position = layout.piece_position(idx);
-    cmd.spawn_scene(bsn! {
-        @piece_scene(p, position, idx)
-        InventoryIndex(idx)
-    });
+    tracing::warn!(?p);
+    cmd.spawn_scene(piece_scene(p, position, idx));
 }
