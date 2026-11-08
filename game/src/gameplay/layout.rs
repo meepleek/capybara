@@ -87,7 +87,7 @@ impl GameLayout<'_, '_> {
                 + 60. // margin
                 + 250. * idx as f32 // piece idx offset
                 + Self::PADDING,
-            window_half.y - 40. - Self::PADDING,
+            window_half.y - 100. - Self::PADDING,
         )
     }
 
