@@ -47,7 +47,7 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         reset_scene_on_hotpatch.run_if(on_message::<bevy::ecs::HotPatched>),
     );
-    app.add_systems(Update, (draw_debug_ui, add_ingredient));
+    app.add_systems(Update, (draw_piece_gizmos, draw_debug_ui, add_ingredient));
     app.add_systems(Update, log_transitions::<Screen>);
 }
 
@@ -99,6 +99,50 @@ fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugOptions>, window: Single<
         rect_size,
         col,
     );
+}
+
+fn draw_piece_gizmos(
+    grid: Single<&IngredientGrid>,
+    piece_q: Query<(&GlobalTransform, &Piece, Option<&DragFocus>)>,
+    mut gizmos: Gizmos,
+    options: Res<DebugOptions>,
+) {
+    if !options.show_debug_ui {
+        return;
+    }
+
+    let floaty_tile_size = grid.tile_size() as f32;
+    for (piece_t, piece, piece_focus) in &piece_q {
+        for t in &piece.tiles {
+            gizmos.rounded_rect_2d(
+                Isometry2d::from_translation(
+                    piece_t.translation().truncate() + t.as_world_vec2() * floaty_tile_size,
+                ),
+                Vec2::splat(floaty_tile_size),
+                tailwind::AMBER_600,
+            );
+        }
+
+        if let Some(focus) = piece_focus {
+            gizmos.text_2d(
+                Isometry2d::from_translation(
+                    piece_t.translation().truncate()
+                        + piece
+                            .tiles
+                            .iter()
+                            .min_by_key(|t| t.x + t.y)
+                            .expect("at least 1 tile")
+                            .as_vec2()
+                            * floaty_tile_size
+                        + Vec2::Y * 22.,
+                ),
+                &format!("{:?}", focus),
+                10.,
+                Vec2::ZERO,
+                tailwind::AMBER_800,
+            );
+        }
+    }
 }
 
 fn add_ingredient(mut kb_input_mr: MessageReader<KeyboardInput>, mut cmd: Commands) {
