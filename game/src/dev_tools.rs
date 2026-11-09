@@ -1,5 +1,7 @@
+use crate::gameplay::drag::{DragFocus, DragPosition};
 use crate::gameplay::grid::IngredientGrid;
 use crate::gameplay::ingredient::{AddIngredient, CommonIngredient, Ingredient};
+use crate::gameplay::piece::Piece;
 use crate::prelude::*;
 
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
@@ -103,7 +105,7 @@ fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugOptions>, window: Single<
 
 fn draw_piece_gizmos(
     grid: Single<&IngredientGrid>,
-    piece_q: Query<(&GlobalTransform, &Piece, Option<&DragFocus>)>,
+    piece_q: Query<(&DragPosition, &Piece, Option<&DragFocus>)>,
     mut gizmos: Gizmos,
     options: Res<DebugOptions>,
 ) {
@@ -112,35 +114,29 @@ fn draw_piece_gizmos(
     }
 
     let floaty_tile_size = grid.tile_size() as f32;
-    for (piece_t, piece, piece_focus) in &piece_q {
+    for (drag, piece, piece_focus) in &piece_q {
+        let color = match piece_focus {
+            Some(DragFocus::Hover) => tailwind::AMBER_400,
+            Some(DragFocus::Active) => tailwind::RED_400,
+            None => tailwind::CYAN_400,
+        };
         for t in &piece.tiles {
             gizmos.rounded_rect_2d(
                 Isometry2d::from_translation(
-                    piece_t.translation().truncate() + t.as_world_vec2() * floaty_tile_size,
+                    drag.drag_position + (t.as_world_vec2() + piece.center) * floaty_tile_size,
                 ),
                 Vec2::splat(floaty_tile_size),
-                tailwind::AMBER_600,
+                color,
             );
-        }
-
-        if let Some(focus) = piece_focus {
-            gizmos.text_2d(
-                Isometry2d::from_translation(
-                    piece_t.translation().truncate()
-                        + piece
-                            .tiles
-                            .iter()
-                            .min_by_key(|t| t.x + t.y)
-                            .expect("at least 1 tile")
-                            .as_vec2()
-                            * floaty_tile_size
-                        + Vec2::Y * 22.,
-                ),
-                &format!("{:?}", focus),
-                10.,
-                Vec2::ZERO,
-                tailwind::AMBER_800,
-            );
+            if let Some(snap) = drag.snapped_data.as_ref() {
+                gizmos.rounded_rect_2d(
+                    Isometry2d::from_translation(
+                        snap.position + (t.as_world_vec2() + piece.center) * floaty_tile_size,
+                    ),
+                    Vec2::splat(floaty_tile_size * 0.9),
+                    tailwind::GRAY_600,
+                );
+            }
         }
     }
 }
