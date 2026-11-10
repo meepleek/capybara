@@ -1,5 +1,3 @@
-use mplk_ecs::hiearchy::RotationOf;
-
 use crate::{
     gameplay::{
         self,
@@ -66,11 +64,11 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
 
     let sprites_translation = (piece.center * INGREDIENT_TILE_SIZE_F32).extend(0.);
     let position = position.into();
-    let translation = position.extend(0.);
+    let transform = Transform::from_translation(position.extend(0.));
     bsn! {
         #piece_root
         piece
-        Transform { translation }
+        transform
         InventoryIndex(inventory_idx)
         DragPosition::new(position)
         Visibility
@@ -87,7 +85,6 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
             #piece_sprites
             Visibility
             Transform { translation: sprites_translation }
-            RotationOf(#piece_root)
             Children [{tiles}]
         ]
     }
@@ -99,7 +96,10 @@ fn add_piece(
     layout: GameLayout,
     piece_q: Query<(), With<Piece>>,
 ) {
-    let mut p = ev.piece.piece();
+    // 1 works for odds, 0 works for evens
+    // todo: why thell is that?!?
+    let mut p = ev.piece.piece().with_rotations(ev.cw_rotations as i32 % 2);
+
     for _ in 0..ev.cw_rotations {
         p.rotate_cw();
     }
