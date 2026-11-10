@@ -34,9 +34,9 @@ pub enum CustomerKind {
 impl CustomerKind {
     pub fn order_duration(self) -> Duration {
         sec(match self {
-            CustomerKind::Regular => 60.,
-            CustomerKind::Fast => 40.,
-            CustomerKind::Snobby => 120.,
+            CustomerKind::Regular => 90.,
+            CustomerKind::Fast => 50.,
+            CustomerKind::Snobby => 150.,
         })
     }
 
