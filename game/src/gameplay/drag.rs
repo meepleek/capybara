@@ -11,7 +11,7 @@ use crate::{
 
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(ensure_single_at_most::<DragFocus>);
-    app.add_systems(Update, raise_z_on_drag_active)
+    app.add_systems(Update, (raise_z_on_drag_active, smooth_drag))
         .add_observer(restore_z_on_drag_rmv);
 }
 
@@ -134,29 +134,16 @@ pub(super) fn on_draggable_press(
 
 pub(super) fn on_draggable_drag(
     ev: On<PointerDrag>,
-    mut q: Query<(&mut DragPosition, &mut Transform)>,
+    mut q: Query<&mut DragPosition>,
     focus_q: Query<(&DragFocus, Has<IgnoreDrag>)>,
-    time: Res<Time>,
 ) {
     let (focus, ignore_drag) = or_return!(focus_q.get(ev.entity));
     if *focus != DragFocus::Active || ignore_drag {
         return;
     }
-    let (mut drag, mut t) = or_return!(q.get_mut(ev.entity));
+    let mut drag = or_return!(q.get_mut(ev.entity));
     let d = ev.delta;
     drag.drag_position += Vec2::new(d.x, -d.y);
-
-    let target = drag
-        .snapped_data
-        .as_ref()
-        .map(|s| s.position)
-        .unwrap_or(drag.drag_position);
-    t.translation = asymptotic_smoothing_with_delta_time(
-        t.translation,
-        target.extend(t.translation.z),
-        0.4,
-        time.delta_secs(),
-    );
 }
 
 pub(super) fn on_draggable_drag_end_snapped<
@@ -220,5 +207,27 @@ pub(super) fn on_draggable_drag_end_restore_position<
             .duration(tween_duration)
             .entity(ev.entity)
             .try_remove::<IgnoreDrag>();
+    }
+}
+
+fn smooth_drag(
+    mut draggable_q: Query<(&DragPosition, &mut Transform, &DragFocus), Without<IgnoreDrag>>,
+    time: Res<Time>,
+) {
+    for (drag, mut t, focus) in &mut draggable_q {
+        if *focus != DragFocus::Active {
+            continue;
+        }
+        let target = drag
+            .snapped_data
+            .as_ref()
+            .map(|s| s.position)
+            .unwrap_or(drag.drag_position);
+        t.translation = asymptotic_smoothing_with_delta_time(
+            t.translation,
+            target.extend(t.translation.z),
+            0.4,
+            time.delta_secs(),
+        );
     }
 }
