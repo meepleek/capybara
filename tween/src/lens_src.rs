@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_tweening::*;
+use mplk_ext::quat::QuatExt;
 
 use crate::{lens_src_relative, lens_src_struct};
 
@@ -63,9 +64,10 @@ impl LensSrcToLens for TransformRotationDegreesLensSrc {
 
     fn lens(&self, component: &Transform) -> Self::Lens {
         Self::Lens {
-            start: self
-                .start
-                .unwrap_or_else(|| component.rotation.to_euler(EulerRot::XYZ).2),
+            start: self.start.map_or_else(
+                || component.rotation.to_rot2().as_radians(),
+                |start_degrees| start_degrees.to_radians(),
+            ),
             end: self.end.to_radians(),
         }
     }
