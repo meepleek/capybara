@@ -9,17 +9,25 @@ impl Plugin for AccumulateRotationPlugin {
     }
 }
 
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Clone, Default)]
 pub struct AccumulatedRotation {
     prev: Option<Rot2>,
-    pub rotation: f32,
+    pub rotation_rad: f32,
+}
+impl AccumulatedRotation {
+    pub fn new(rotation_rad: f32) -> Self {
+        Self {
+            rotation_rad,
+            prev: None,
+        }
+    }
 }
 
 fn accumulate_angle(mut acc_q: Query<(&mut AccumulatedRotation, &Transform), Changed<Transform>>) {
     for (mut acc, t) in &mut acc_q {
         let rot = t.rotation.to_rot2();
         if let Some(prev) = acc.prev {
-            acc.rotation += prev.angle_to(rot);
+            acc.rotation_rad += prev.angle_to(rot);
         }
         acc.prev = Some(rot);
     }
