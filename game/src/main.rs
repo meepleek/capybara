@@ -5,6 +5,7 @@
 
 use bevy::{asset::AssetMetaCheck, prelude::*};
 use clap::Parser;
+use mplk_ecs::transform::AccumulateRotationPlugin;
 
 use crate::{cli::Cli, screens::Screen};
 
@@ -68,6 +69,7 @@ impl Plugin for AppPlugin {
             screens::plugin,
             theme::plugin,
             assets::plugin(cli.screen.unwrap_or(Screen::Gameplay)),
+            AccumulateRotationPlugin,
         ));
 
         app.configure_sets(

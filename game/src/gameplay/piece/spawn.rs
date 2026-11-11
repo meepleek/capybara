@@ -1,3 +1,5 @@
+use mplk_ecs::transform::AccumulatedRotation;
+
 use crate::{
     gameplay::{
         self,
@@ -14,7 +16,12 @@ pub(super) fn plugin(app: &mut App) {
     app.add_observer(add_piece);
 }
 
-pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -> impl Scene {
+pub fn piece_scene(
+    add_piece: &AddPiece,
+    position: impl Into<Vec2>,
+    inventory_idx: u8,
+) -> impl Scene {
+    let mut piece = add_piece.piece.piece();
     let mut tiles: Vec<Box<dyn Scene>> = Vec::new();
     for t in &piece.tiles {
         let translation = (t.as_world_vec2() * INGREDIENT_TILE_SIZE_F32).extend(2.);
@@ -64,11 +71,20 @@ pub fn piece_scene(piece: Piece, position: impl Into<Vec2>, inventory_idx: u8) -
 
     let sprites_translation = (piece.center * INGREDIENT_TILE_SIZE_F32).extend(0.);
     let position = position.into();
-    let transform = Transform::from_translation(position.extend(0.));
+    // only rotate piece at this point for the spawned to reflect the tiles prior to rotation since the transform is actually rotated
+    for _ in 0..add_piece.cw_rotations {
+        piece.rotate_cw();
+    }
+    let piece_rotation_degrees = piece.rotation_degrees();
+    let transform = Transform::from_translation(position.extend(0.))
+        .with_rotation(Rot2::degrees(piece_rotation_degrees).to_quat());
+    let rotation_rad = piece_rotation_degrees.to_radians();
+
     bsn! {
         #piece_root
         piece
         transform
+        AccumulatedRotation::new(rotation_rad)
         InventoryIndex(inventory_idx)
         DragPosition::new(position)
         Visibility
@@ -96,15 +112,7 @@ fn add_piece(
     layout: GameLayout,
     piece_q: Query<(), With<Piece>>,
 ) {
-    // 1 works for odds, 0 works for evens
-    // todo: why thell is that?!?
-    let mut p = ev.piece.piece().with_rotations(ev.cw_rotations as i32 % 2);
-
-    for _ in 0..ev.cw_rotations {
-        p.rotate_cw();
-    }
     let idx = ev.idx.unwrap_or_else(|| piece_q.count() as u8);
     let position = layout.piece_position(idx);
-    tracing::warn!(?p);
-    cmd.spawn_scene(piece_scene(p, position, idx));
+    cmd.spawn_scene(piece_scene(ev.event(), position, idx));
 }

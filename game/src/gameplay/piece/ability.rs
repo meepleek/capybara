@@ -1,3 +1,5 @@
+use mplk_ecs::transform::AccumulatedRotation;
+
 use crate::{
     gameplay::{
         drag::DraggableDrop,
@@ -35,8 +37,12 @@ fn on_piece_drop(ev: On<DraggableDrop<Ingredient, Piece>>, mut cmd: Commands) {
     cmd.trigger(AbilityUsed(ev.draggable));
 }
 
-pub fn rotate_piece(ev: On<RotatePiece>, mut piece_q: Query<&mut Piece>, mut cmd: Commands) {
-    let mut piece = or_return!(piece_q.get_mut(ev.entity));
+pub fn rotate_piece(
+    ev: On<RotatePiece>,
+    mut piece_q: Query<(&mut Piece, &AccumulatedRotation)>,
+    mut cmd: Commands,
+) {
+    let (mut piece, rotation) = or_return!(piece_q.get_mut(ev.entity));
     match ev.rotation {
         PieceRotation::CW(rotations) => {
             for _ in 0..rotations {
@@ -49,9 +55,10 @@ pub fn rotate_piece(ev: On<RotatePiece>, mut piece_q: Query<&mut Piece>, mut cmd
             }
         }
     }
-    let rotation_deg = piece.rotation_degrees();
+    let from = rotation.rotation_rad.to_degrees();
+    let to = piece.rotation_degrees();
     cmd.try_insert_to(
         ev.entity,
-        TransformRotationDegreesLensSrc::new(rotation_deg).duration(ms(300)),
+        TransformRotationDegreesLensSrc::absolute(from, to).duration(ms(300)),
     );
 }

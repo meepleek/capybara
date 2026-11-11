@@ -43,7 +43,7 @@ pub struct RotatePiece {
 pub struct Piece {
     pub tiles: Vec<TileCoords>,
     pub center: Vec2,
-    pub rotations: i32,
+    rotations: i32,
 }
 impl Piece {
     pub fn new<T: Into<TileCoords>>(
@@ -59,17 +59,12 @@ impl Piece {
         piece
     }
 
-    pub fn with_rotations(mut self, rotations: i32) -> Self {
-        self.rotations = rotations;
-        self
-    }
-
     pub fn rotate_cw(&mut self) {
         for t in &mut self.tiles {
             *t = TileCoords::new(-t.y, t.x);
         }
-        self.rotations -= 1;
         self.normalize_tiles();
+        self.rotations -= 1;
         self.flip_center();
     }
 
@@ -77,8 +72,8 @@ impl Piece {
         for t in &mut self.tiles {
             *t = TileCoords::new(t.y, -t.x);
         }
-        self.rotations += 1;
         self.normalize_tiles();
+        self.rotations += 1;
         self.flip_center();
     }
 
