@@ -97,8 +97,8 @@ impl TutorialLevelData {
         let grid = r"
 #########
 #########
-#########
-#########
+###...###
+#####.###
 #########
 #########
 #########
@@ -115,14 +115,14 @@ impl TutorialLevelData {
                 TutorialStep::text(
                     "You might have already noticed that ingredients can be used for other things.",
                 ),
-                TutorialStep::rotated_piece(L, 1),
+                TutorialStep::rotated_piece(L, 0),
                 TutorialStep::text(
                     "The piece I just gave you won't fit in without rotating it a bit.\nTry to use this apple.",
                 ),
                 AddIngredient(Common(Apple)),
                 WaitForIngredientAbility(Common(Apple)),
                 TutorialStep::text(
-                    "How do like them apples?\nI'll let you figure what the other do on your own.",
+                    "How do like them apples?\nI'll let you figure what the other ingredients do on your own.",
                 ),
             ],
         }
