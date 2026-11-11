@@ -1,10 +1,11 @@
-use mplk_ecs::observer::ensure_single_at_most;
+use mplk_ecs::observer::{ensure_single_at_most, map_entity_event};
 use mplk_utils::math::asymptotic_smoothing_with_delta_time;
 
 use crate::{
     gameplay::{
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
+        ui::text_popup::TextPopupOpened,
     },
     prelude::*,
 };
@@ -12,7 +13,9 @@ use crate::{
 pub(super) fn plugin(app: &mut App) {
     app.add_observer(ensure_single_at_most::<DragFocus>);
     app.add_systems(Update, (raise_z_on_drag_active, smooth_drag))
-        .add_observer(restore_z_on_drag_rmv);
+        .add_observer(restore_z_on_drag_rmv)
+        .add_observer(cancel_drag::<TextPopupOpened>)
+        .add_observer(map_entity_event::<PointerDragEnd, _>(|e, _| DragEnd(e)));
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq)]
@@ -47,6 +50,9 @@ impl DragPosition {
         }
     }
 }
+
+#[derive(EntityEvent, Debug)]
+pub struct DragEnd(pub Entity);
 
 #[derive(Component, Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct DropTarget<T>(PhantomData<T>);
@@ -180,7 +186,7 @@ pub(super) fn on_draggable_drag_end_snapped<
 pub(super) fn on_draggable_drag_end_restore_position<
     TDraggable: Component + InventoryPosition + Clone + Debug,
 >(
-    ev: On<PointerDragEnd>,
+    ev: On<DragEnd>,
     mut piece_q: Query<
         (&mut DragPosition, &InventoryIndex),
         (Without<IgnoreDrag>, With<TDraggable>),
@@ -188,14 +194,14 @@ pub(super) fn on_draggable_drag_end_restore_position<
     mut cmd: Commands,
     layout: GameLayout,
 ) {
-    let (mut drag, idx) = or_return!(piece_q.get_mut(ev.entity));
+    let (mut drag, idx) = or_return!(piece_q.get_mut(ev.0));
     if let None = drag.snapped_data.as_ref() {
-        cmd.try_remove_from::<DragFocus>(ev.entity);
+        cmd.try_remove_from::<DragFocus>(ev.0);
         let start_pos = TDraggable::inventory_position(&layout, idx);
         drag.drag_position = start_pos;
         let tween_duration = ms(330);
         cmd.try_insert_to(
-            ev.entity,
+            ev.0,
             (
                 TransformPositionLensSrc::new(start_pos)
                     .duration(tween_duration)
@@ -205,7 +211,7 @@ pub(super) fn on_draggable_drag_end_restore_position<
         );
         cmd.delayed()
             .duration(tween_duration)
-            .entity(ev.entity)
+            .entity(ev.0)
             .try_remove::<IgnoreDrag>();
     }
 }
@@ -229,5 +235,15 @@ fn smooth_drag(
             0.4,
             time.delta_secs(),
         );
+    }
+}
+
+fn cancel_drag<TEv: EntityEvent>(
+    _ev: On<TEv>,
+    focus_q: Query<Entity, With<DragFocus>>,
+    mut cmd: Commands,
+) {
+    for e in &focus_q {
+        cmd.try_trigger(e, |e| DragEnd(e));
     }
 }

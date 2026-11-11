@@ -56,12 +56,30 @@ pub fn readd_default_component<TComponent: Component + Default>(
     or_return_quiet!(cmd.get_entity(ev.entity)).try_insert(TComponent::default());
 }
 
-pub fn map_event<'t, TSourceEv: EntityEvent, TTargetEv: EntityEvent<Trigger<'t>: Default>>(
+pub fn map_entity_event<
+    't,
+    TSourceEv: EntityEvent,
+    TTargetEv: EntityEvent<Trigger<'t>: Default>,
+>(
     target_fn: impl Fn(Entity, &TSourceEv) -> TTargetEv,
 ) -> impl FnMut(On<TSourceEv>, Commands) {
     move |ev, mut cmd| {
         tiny_bail::or_return!(cmd.get_entity(ev.event_target()))
             .trigger(|e| target_fn(e, ev.event()));
+    }
+}
+
+pub fn map_insert_event<
+    't,
+    TSourceComponent: Component,
+    TTargetEv: EntityEvent<Trigger<'t>: Default>,
+>(
+    target_fn: impl Fn(Entity, &TSourceComponent) -> TTargetEv,
+) -> impl FnMut(On<Insert<TSourceComponent>>, Query<&TSourceComponent>, Commands) {
+    move |ev, q, mut cmd| {
+        let component = tiny_bail::or_return!(q.get(ev.event_target()));
+        tiny_bail::or_return!(cmd.get_entity(ev.event_target()))
+            .trigger(|e| target_fn(e, component));
     }
 }
 

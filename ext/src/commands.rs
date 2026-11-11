@@ -9,6 +9,9 @@ pub trait CommandsExt {
 
     /** Try to despawn an entity */
     fn try_despawn(&mut self, entity: Entity);
+    fn try_trigger<'t, TEv>(&mut self, entity: Entity, event_fn: impl FnOnce(Entity) -> TEv)
+    where
+        TEv: EntityEvent<Trigger<'t>: Default>;
 }
 impl CommandsExt for Commands<'_, '_> {
     fn try_insert_to(&mut self, entity: Entity, bundle: impl Bundle) {
@@ -26,6 +29,16 @@ impl CommandsExt for Commands<'_, '_> {
     fn try_despawn(&mut self, entity: Entity) {
         if let Ok(mut e_cmd) = self.get_entity(entity) {
             e_cmd.try_despawn();
+        }
+    }
+
+    fn try_trigger<'t, TEv: EntityEvent<Trigger<'t>: Default>>(
+        &mut self,
+        entity: Entity,
+        event_fn: impl FnOnce(Entity) -> TEv,
+    ) {
+        if let Ok(mut e_cmd) = self.get_entity(entity) {
+            e_cmd.trigger(event_fn);
         }
     }
 }

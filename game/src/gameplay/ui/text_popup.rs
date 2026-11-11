@@ -1,11 +1,16 @@
 use bevy::{ui::InteractionDisabled, ui_widgets::Activate};
+use mplk_ecs::observer::map_insert_event;
 
 use crate::{gameplay::ui::button, prelude::*};
 
 pub(super) fn plugin(app: &mut App) {
     app.add_systems(Update, tick_popup_cooldown);
-    app.add_observer(remove_previous_popups);
+    app.add_observer(remove_previous_popups)
+        .add_observer(map_insert_event::<TextPopup, _>(|e, _| TextPopupOpened(e)));
 }
+
+#[derive(EntityEvent)]
+pub struct TextPopupOpened(Entity);
 
 #[derive(EntityEvent)]
 pub struct TextPopupClosed(Entity);
@@ -17,6 +22,11 @@ struct TextPopupContinuBtnCooldown(Timer);
 struct TextPopup;
 
 pub fn popup(text: impl Into<String>) -> impl Scene {
+    let cooldown = Timer::from_seconds(
+        if cfg!(feature = "dev") { 0.1 } else { 1. },
+        TimerMode::Once,
+    );
+
     bsn! {
         #text_popup
         TextPopup
@@ -46,8 +56,7 @@ pub fn popup(text: impl Into<String>) -> impl Scene {
                 --
                 #continue_btn
                 @button("Continue")
-                TextPopupContinuBtnCooldown(Timer::from_seconds(0.1, TimerMode::Once))
-                // TextPopupContinuBtnCooldown(Timer::from_seconds(1., TimerMode::Once))
+                TextPopupContinuBtnCooldown(cooldown)
                 InteractionDisabled
                 on(handle_continue)
             ]
