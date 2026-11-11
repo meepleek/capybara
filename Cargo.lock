@@ -450,6 +450,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-settings"
+version = "0.20.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "305a3334b4c3cc25075ae5fc125bc2d7fba473a5ec2c1b1a5213d361e831640a"
+dependencies = [
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_ecs_macros",
+ "bevy_log",
+ "bevy_platform",
+ "bevy_reflect",
+ "bevy_tasks",
+ "bevy_time",
+ "serde",
+ "thiserror 2.0.21",
+ "toml",
+ "web-sys",
+]
+
+[[package]]
 name = "bevy_a11y"
 version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1171,6 +1191,7 @@ version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c1402190b1de36b317af1e9ff4f2f03e5478f0f9d9ac84ccf2ef01fa1dd8182"
 dependencies = [
+ "bevy-settings",
  "bevy_a11y",
  "bevy_android",
  "bevy_animation",

@@ -1,3 +1,5 @@
+use bevy::settings::{ReflectSettingsGroup, SettingsGroup};
+
 use crate::{
     gameplay::{
         cauldron::{Cauldron, cauldron_scene},
@@ -13,6 +15,7 @@ use crate::{
     },
     prelude::*,
     screens::GameplayLevel,
+    settings::save_settings,
 };
 
 pub mod regular;
@@ -21,13 +24,16 @@ pub mod tutorial;
 
 pub(super) fn plugin(app: &mut App) {
     app.add_plugins((tutorial::plugin, spawn::plugin, regular::plugin));
-    app.insert_resource(LevelIndex(2));
+    // app.insert_resource(LevelIndex(0));
     // app.insert_resource(LevelIndex(0));
     app.add_observer(level_finished);
     app.add_systems(OnEnter(Screen::Gameplay), setup_level);
+    app.add_systems(Update, save_settings::<LevelIndex>);
 }
 
-#[derive(Resource)]
+#[derive(Resource, SettingsGroup, Debug, Default, Reflect)]
+#[reflect(Resource, SettingsGroup, Default)]
+#[settings_group(file = "lvl")]
 pub struct LevelIndex(pub u8);
 
 #[derive(Component, Debug)]

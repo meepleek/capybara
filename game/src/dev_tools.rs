@@ -3,25 +3,29 @@ use crate::gameplay::grid::IngredientGrid;
 use crate::gameplay::ingredient::{AddIngredient, CommonIngredient, Ingredient};
 use crate::gameplay::piece::Piece;
 use crate::prelude::*;
+use crate::settings::save_settings;
 
 use bevy::dev_tools::picking_debug::{DebugPickingMode, DebugPickingPlugin};
 use bevy::input::keyboard::{KeyCode, KeyboardInput};
+use bevy::settings::{ReflectSettingsGroup, SettingsGroup};
 use bevy::{color::palettes::tailwind, dev_tools::states::log_transitions};
 use mplk_grid::debug::DebugGridPlugin;
 
-#[derive(Default, PartialEq, Eq, Debug)]
+#[derive(Default, PartialEq, Eq, Debug, Reflect)]
 pub enum HotpatchMode {
     #[default]
     Nothing,
     ResetState,
 }
 
-#[derive(Resource, Debug)]
-pub struct DebugOptions {
+#[derive(Resource, SettingsGroup, Debug, Reflect)]
+#[reflect(Resource, SettingsGroup, Default)]
+#[settings_group(file = "debug")]
+pub struct DebugSettings {
     hotpatch_mode: HotpatchMode,
     show_debug_ui: bool,
 }
-impl Default for DebugOptions {
+impl Default for DebugSettings {
     fn default() -> Self {
         Self {
             hotpatch_mode: default(),
@@ -35,7 +39,7 @@ pub(super) fn plugin(app: &mut App) {
         DebugPickingPlugin,
         DebugGridPlugin::<IngredientGrid, ()>::default(),
     ));
-    app.init_resource::<DebugOptions>();
+    app.init_resource::<DebugSettings>();
     app.insert_resource(DebugPickingMode::Normal);
     app.add_systems(
         Update,
@@ -49,11 +53,19 @@ pub(super) fn plugin(app: &mut App) {
         Update,
         reset_scene_on_hotpatch.run_if(on_message::<bevy::ecs::HotPatched>),
     );
-    app.add_systems(Update, (draw_piece_gizmos, draw_debug_ui, add_ingredient));
+    app.add_systems(
+        Update,
+        (
+            save_settings::<DebugSettings>,
+            draw_piece_gizmos,
+            draw_debug_ui,
+            add_ingredient,
+        ),
+    );
     app.add_systems(Update, log_transitions::<Screen>);
 }
 
-fn toggle_hotpatch_mode(mut options: ResMut<DebugOptions>) {
+fn toggle_hotpatch_mode(mut options: ResMut<DebugSettings>) {
     use HotpatchMode::*;
 
     options.hotpatch_mode = match options.hotpatch_mode {
@@ -62,7 +74,7 @@ fn toggle_hotpatch_mode(mut options: ResMut<DebugOptions>) {
     };
 }
 
-fn toggle_debug_ui(mut options: ResMut<DebugOptions>, mut picking_mode: ResMut<DebugPickingMode>) {
+fn toggle_debug_ui(mut options: ResMut<DebugSettings>, mut picking_mode: ResMut<DebugPickingMode>) {
     if options.show_debug_ui {
         options.show_debug_ui = false;
         *picking_mode = DebugPickingMode::Disabled;
@@ -75,14 +87,14 @@ fn toggle_debug_ui(mut options: ResMut<DebugOptions>, mut picking_mode: ResMut<D
 fn reset_scene_on_hotpatch(
     mut next: ResMut<NextState<Screen>>,
     state: Res<State<Screen>>,
-    options: Res<DebugOptions>,
+    options: Res<DebugSettings>,
 ) {
     if options.hotpatch_mode == HotpatchMode::ResetState {
         next.set(*state.get());
     }
 }
 
-fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugOptions>, window: Single<&Window>) {
+fn draw_debug_ui(mut gizmos: Gizmos, options: Res<DebugSettings>, window: Single<&Window>) {
     let win_half_size = window.size() / 2.;
     let col = tailwind::INDIGO_400;
     gizmos.text_2d(
@@ -107,7 +119,7 @@ fn draw_piece_gizmos(
     grid: Single<&IngredientGrid>,
     piece_q: Query<(&DragPosition, &Piece, Option<&DragFocus>)>,
     mut gizmos: Gizmos,
-    options: Res<DebugOptions>,
+    options: Res<DebugSettings>,
 ) {
     if !options.show_debug_ui {
         return;

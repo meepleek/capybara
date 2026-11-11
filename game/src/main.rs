@@ -9,7 +9,6 @@ use mplk_ecs::transform::AccumulateRotationPlugin;
 
 use crate::{cli::Cli, screens::Screen};
 
-mod anim;
 mod assets;
 mod audio;
 mod cli;
@@ -17,7 +16,10 @@ pub mod gameplay;
 mod menus;
 mod prelude;
 mod screens;
+mod settings;
 mod theme;
+
+pub const GAME_NAME: &str = "capyBARa";
 
 #[cfg(feature = "dev")]
 mod dev_tools;
@@ -33,7 +35,7 @@ impl Plugin for AppPlugin {
         let cli = Cli::parse();
 
         // Add Bevy plugins.
-        app.add_plugins(
+        app.add_plugins((
             DefaultPlugins
                 .set(AssetPlugin {
                     // Wasm builds will check for meta files (that don't exist) if this isn't set.
@@ -47,7 +49,7 @@ impl Plugin for AppPlugin {
                 })
                 .set(WindowPlugin {
                     primary_window: Window {
-                        title: "capyBARa".to_string(),
+                        title: GAME_NAME.to_string(),
                         fit_canvas_to_parent: true,
                         ..default()
                     }
@@ -55,7 +57,9 @@ impl Plugin for AppPlugin {
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),
-        );
+            // settings plugin should come pretty early to load settings and insert their resources so they are available for other plugins
+            settings::plugin,
+        ));
 
         app.add_plugins(mplk_tween::prelude::TweenBuilderPlugin);
 
