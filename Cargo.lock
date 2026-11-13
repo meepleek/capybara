@@ -3101,6 +3101,7 @@ dependencies = [
  "clap",
  "getrandom 0.3.4",
  "iyes_progress",
+ "mplk_color",
  "mplk_ecs",
  "mplk_ext",
  "mplk_grid",
@@ -4125,6 +4126,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mplk_color"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "mplk_ecs"
 version = "0.1.0"
 dependencies = [
@@ -4175,6 +4183,7 @@ dependencies = [
  "bevy",
  "bevy_tweening",
  "log",
+ "mplk_color",
  "mplk_ext",
  "mplk_utils",
  "tiny_bail",

@@ -3,6 +3,7 @@ resolver = "3"
 members = ["game"]
 
 [workspace.dependencies]
+mplk_color = { path = "./color" }
 mplk_ecs = { path = "./ecs" }
 mplk_ext = { path = "./ext" }
 mplk_tween = { path = "./tween" }
