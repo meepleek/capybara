@@ -27,9 +27,14 @@ pub enum DragFocus {
 #[derive(Component, Debug)]
 pub struct IgnoreDrag;
 
+pub trait ValidDragTarget<TDraggable: Component> {
+    fn valid(draggable: &TDraggable) -> bool;
+}
+
 #[derive(Component, Debug)]
 pub struct InitialTranslationZ(f32);
 
+// todo: add EntityEvent for snapping
 #[derive(Debug, Clone)]
 pub struct SnapData {
     pub position: Vec2,
@@ -74,6 +79,39 @@ impl<TDraggable: Component + InventoryPosition + Clone, TDropTarget: Component>
             position,
             target_entity,
             draggable,
+            _drop_phantom: default(),
+        }
+    }
+}
+
+#[derive(EntityEvent, Debug, PartialEq)]
+pub struct DraggableSnapChange<TDraggable: Component, TDropTarget: Component> {
+    pub position: Option<Vec2>,
+    #[event_target]
+    pub target_entity: Entity,
+    pub draggable_entity: Entity,
+    _draggable_phantom: PhantomData<TDraggable>,
+    _drop_phantom: PhantomData<TDropTarget>,
+}
+impl<TDraggable: Component + InventoryPosition, TDropTarget: Component>
+    DraggableSnapChange<TDraggable, TDropTarget>
+{
+    pub fn snapped(draggable_entity: Entity, target_entity: Entity, position: Vec2) -> Self {
+        Self {
+            position: Some(position),
+            target_entity,
+            draggable_entity,
+            _draggable_phantom: default(),
+            _drop_phantom: default(),
+        }
+    }
+
+    pub fn unsnapped(draggable_entity: Entity, target_entity: Entity) -> Self {
+        Self {
+            position: None,
+            target_entity,
+            draggable_entity,
+            _draggable_phantom: default(),
             _drop_phantom: default(),
         }
     }

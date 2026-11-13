@@ -9,6 +9,7 @@ mplk_ext.workspace = true
 mplk_utils.workspace = true
 mplk_tween.workspace = true
 mplk_grid.workspace = true
+mplk_color.workspace = true
 
 bevy = { workspace = true, features = ["bevy_settings"] }
 tracing.workspace = true

@@ -24,5 +24,5 @@ impl<'w, 's, TComponent: Component> Hiearchy<'w, 's, TComponent> {
     }
 }
 
-relationship_1_to_1!(SpritesOf, SpritesAncestor);
+relationship_1_to_1!(SpriteOf, SpritesAncestor);
 relationship_1_to_1!(RotationOf, RotationAncestor);

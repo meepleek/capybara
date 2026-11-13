@@ -1,11 +1,13 @@
-use bevy::prelude::*;
+use crate::prelude::*;
 
 mod camera;
 pub mod capy;
 pub mod cauldron;
+pub mod color;
 pub mod customer;
 pub mod drag;
 pub mod grid;
+pub mod highlight;
 pub mod ingredient;
 pub mod inventory;
 pub mod layout;
@@ -27,5 +29,6 @@ pub(super) fn plugin(app: &mut App) {
         customer::plugin,
         level::plugin,
         ui::plugin,
+        color::plugin,
     ));
 }

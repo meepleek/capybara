@@ -1,5 +1,6 @@
 use crate::{
     gameplay::{
+        drag::ValidDragTarget,
         layout::{GameLayout, LayoutElementPosition},
         piece::Piece,
     },
@@ -231,6 +232,11 @@ impl IngredientGrid {
 impl LayoutElementPosition for IngredientGrid {
     fn position(layout: &GameLayout, grid: &IngredientGrid) -> Vec2 {
         layout.grid_position(grid)
+    }
+}
+impl ValidDragTarget<Piece> for IngredientGrid {
+    fn valid(_draggable: &Piece) -> bool {
+        true
     }
 }
 

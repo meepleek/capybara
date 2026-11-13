@@ -1,6 +1,7 @@
 use crate::{
     gameplay::{
-        ingredient::{CommonIngredient, DroppableIngredientTarget, FusedIngredient, Ingredient},
+        drag::ValidDragTarget,
+        ingredient::{CommonIngredient, FusedIngredient, Ingredient},
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
         piece::template::PieceTemplate,
@@ -113,8 +114,8 @@ impl InventoryPosition for Piece {
         layout.piece_position(idx.0)
     }
 }
-impl DroppableIngredientTarget for Piece {
-    fn droppable(ingredient: Ingredient) -> bool {
+impl ValidDragTarget<Ingredient> for Piece {
+    fn valid(ingredient: &Ingredient) -> bool {
         use CommonIngredient::*;
         use FusedIngredient::*;
         use Ingredient::*;

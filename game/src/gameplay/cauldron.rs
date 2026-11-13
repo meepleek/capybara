@@ -2,8 +2,8 @@ use mplk_ecs::{observer::readd_default_component, relationship_1_to_n};
 
 use crate::{
     gameplay::{
-        drag::DraggableDrop,
-        ingredient::{DroppableIngredientTarget, Ingredient},
+        drag::{DraggableDrop, ValidDragTarget},
+        ingredient::Ingredient,
         inventory::InventoryIndex,
         layout::{GameLayout, InventoryPosition},
     },
@@ -24,8 +24,8 @@ impl InventoryPosition for Cauldron {
 }
 
 relationship_1_to_n!(IngredientOfCauldron, Cauldron);
-impl DroppableIngredientTarget for Cauldron {
-    fn droppable(_: Ingredient) -> bool {
+impl ValidDragTarget<Ingredient> for Cauldron {
+    fn valid(_draggable: &Ingredient) -> bool {
         true
     }
 }

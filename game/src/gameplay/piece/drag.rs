@@ -1,6 +1,6 @@
 use crate::{
     gameplay::{
-        drag::{DragFocus, DragPosition, DraggableDrop, SnapData},
+        drag::{DragFocus, DragPosition, DraggableDrop, DraggableSnapChange, SnapData},
         grid::{GridSectionCompletedMsg, IngredientGrid},
         piece::Piece,
     },
@@ -29,12 +29,13 @@ pub(super) fn on_drop(
 }
 
 fn snap_pieces_to_grid(
-    mut piece_q: Query<(&Piece, &mut DragPosition, &DragFocus)>,
+    mut piece_q: Query<(Entity, &Piece, &mut DragPosition, &DragFocus)>,
     grid: Single<(Entity, &IngredientGrid)>,
+    mut cmd: Commands,
 ) {
     let (grid_e, grid) = *grid;
     let tile_size = grid.tile_size() as f32;
-    for (piece, mut drag, focus) in &mut piece_q {
+    for (piece_e, piece, mut drag, focus) in &mut piece_q {
         if *focus != DragFocus::Active {
             continue;
         }
@@ -49,8 +50,14 @@ fn snap_pieces_to_grid(
                 position: tile_pos,
                 entity: grid_e,
             });
+            cmd.try_trigger(grid_e, |e| {
+                DraggableSnapChange::<Piece, IngredientGrid>::snapped(piece_e, e, tile_pos)
+            });
         } else {
             drag.snapped_data = None;
+            cmd.try_trigger(grid_e, |e| {
+                DraggableSnapChange::<Piece, IngredientGrid>::unsnapped(piece_e, e)
+            });
         }
     }
 }
