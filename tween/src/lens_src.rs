@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_tweening::*;
 use mplk_ext::quat::QuatExt;
 
-use crate::{lens_src_relative, lens_src_struct};
+use crate::{impl_lens_src, lens_src_relative, lens_src_struct};
 
 pub trait LensSrcToLens {
     type Component: Component;
@@ -104,17 +104,12 @@ impl LensSrcToLens for TransformScaleLensSrc {
 }
 
 lens_src_struct!(UiTransformScaleLensSrc, Vec2);
-impl LensSrcToLens for UiTransformScaleLensSrc {
-    type Component = UiTransform;
-    type Lens = bevy_tweening::lens::UiTransformScaleLens;
-
-    fn lens(&self, component: &UiTransform) -> Self::Lens {
-        Self::Lens {
-            start: self.start.unwrap_or(component.scale),
-            end: self.end,
-        }
-    }
-}
+impl_lens_src!(
+    bevy::ui::UiTransform,
+    crate::lens_src::UiTransformScaleLensSrc,
+    bevy_tweening::lens::UiTransformScaleLens,
+    scale,
+);
 
 lens_src_struct!(SpriteAlphaLensSrc, f32);
 impl LensSrcToLens for SpriteAlphaLensSrc {
@@ -132,17 +127,12 @@ impl LensSrcToLens for SpriteAlphaLensSrc {
 }
 
 lens_src_struct!(SpriteColorLensSrc, Color);
-impl LensSrcToLens for SpriteColorLensSrc {
-    type Component = Sprite;
-    type Lens = bevy_tweening::lens::SpriteColorLens;
-
-    fn lens(&self, component: &Sprite) -> Self::Lens {
-        Self::Lens {
-            start: self.start.unwrap_or(component.color),
-            end: self.end,
-        }
-    }
-}
+impl_lens_src!(
+    bevy::sprite::Sprite,
+    crate::lens_src::SpriteColorLensSrc,
+    bevy_tweening::lens::SpriteColorLens,
+    color,
+);
 
 lens_src_struct!(TextAlphaLensSrc, f32);
 impl LensSrcToLens for TextAlphaLensSrc {
@@ -160,17 +150,11 @@ impl LensSrcToLens for TextAlphaLensSrc {
 }
 
 lens_src_struct!(TextColorLensSrc, Color);
-impl LensSrcToLens for TextColorLensSrc {
-    type Component = TextColor;
-    type Lens = bevy_tweening::lens::TextColorLens;
-
-    fn lens(&self, component: &Self::Component) -> Self::Lens {
-        Self::Lens {
-            start: self.start.unwrap_or(component.0),
-            end: self.end,
-        }
-    }
-}
+impl_lens_src!(
+    bevy::text::TextColor,
+    crate::lens_src::TextColorLensSrc,
+    bevy_tweening::lens::TextColorLens,
+);
 
 lens_src_struct!(UiBgAlphaLensSrc, f32);
 impl LensSrcToLens for UiBgAlphaLensSrc {
@@ -188,17 +172,18 @@ impl LensSrcToLens for UiBgAlphaLensSrc {
 }
 
 lens_src_struct!(UiBgColorLensSrc, Color);
-impl LensSrcToLens for UiBgColorLensSrc {
-    type Component = BackgroundColor;
-    type Lens = bevy_tweening::lens::UiBackgroundColorLens;
+impl_lens_src!(
+    bevy::ui::BackgroundColor,
+    crate::lens_src::UiBgColorLensSrc,
+    bevy_tweening::lens::UiBackgroundColorLens,
+);
 
-    fn lens(&self, component: &Self::Component) -> Self::Lens {
-        Self::Lens {
-            start: self.start.unwrap_or(component.0),
-            end: self.end,
-        }
-    }
-}
+lens_src_struct!(OutlineColorLensSrc, Color);
+impl_lens_src!(
+    mplk_color::OutlineColor,
+    crate::lens_src::OutlineColorLensSrc,
+    crate::lens::OutlineColorLens,
+);
 
 // #[derive(Component)]
 // #[component(storage = "SparseSet")]

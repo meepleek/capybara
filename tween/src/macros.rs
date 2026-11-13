@@ -50,3 +50,28 @@ macro_rules! lens_src_duration_fn {
         }
     };
 }
+
+#[macro_export]
+macro_rules! impl_lens_src {
+    ($component_type_path: path, $lens_src_type_path: path, $lens_type_path: path, $field: tt,) => {
+        impl $crate::lens_src::LensSrcToLens for $lens_src_type_path {
+            type Component = $component_type_path;
+            type Lens = $lens_type_path;
+
+            fn lens(&self, component: &Self::Component) -> Self::Lens {
+                Self::Lens {
+                    start: self.start.unwrap_or(component.$field),
+                    end: self.end,
+                }
+            }
+        }
+    };
+    ($component_type_path: path, $lens_src_type_path: path, $lens_type_path: path,) => {
+        impl_lens_src!(
+            $component_type_path,
+            $lens_src_type_path,
+            $lens_type_path,
+            0,
+        );
+    };
+}
